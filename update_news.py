@@ -8,92 +8,62 @@ from datetime import datetime
 
 # إعداد الذكاء الاصطناعي
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("❌ خطأ: مفتاح GEMINI_API_KEY غير موجود في Secrets!")
-else:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-pro')
 
-# روابط RSS متنوعة وموثوقة جداً
-RSS_FEEDS =[
+RSS_FEEDS = [
     "https://www.skynewsarabia.com/rss/v1/middle-east.xml",
     "https://arabic.cnn.com/api/v1/rss/world/rss.xml",
-    "https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9",
-    "https://rss.rtarabic.com/news/"
+    "https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9"
 ]
 
-def get_detailed_article(title, text, summary):
+def ai_process(title, text):
     try:
-        prompt = f"أعد صياغة هذا الخبر بشكل مقال طويل ومفصل بالعربية: العنوان: {title}\nالنص: {text[:2000]}\nأجب بصيغة JSON فقط: {{\"seo_title\": \"...\", \"content\": \"...\", \"category\": \"...\"}}"
+        prompt = f"أعد صياغة الخبر التالي بشكل مقال صحفي مفصل بالعربية: العنوان: {title}\nالنص: {text[:1500]}\nأجب بصيغة JSON فقط: {{\"title\": \"...\", \"content\": \"...\", \"category\": \"...\", \"importance\": 1-10}}"
         response = model.generate_content(prompt)
-        # محاولة استخراج JSON من رد الذكاء الاصطناعي
-        raw_text = response.text.strip()
-        if "```json" in raw_text:
-            raw_text = raw_text.split("```json")[1].split("```")[0]
-        return json.loads(raw_text)
-    except Exception as e:
-        print(f"⚠️ فشل الذكاء الاصطناعي: {e}")
-        return None
+        res_text = response.text.strip()
+        if "```json" in res_text: res_text = res_text.split("```json")[1].split("```")[0]
+        return json.loads(res_text)
+    except: return None
 
-# جلب البيانات القديمة
-existing_news = []
+# جلب الأرشيف
+archive = []
 if os.path.exists('news.json'):
-    try:
-        with open('news.json', 'r', encoding='utf-8') as f:
-            existing_news = json.load(f)
-    except:
-        existing_news = []
+    with open('news.json', 'r', encoding='utf-8') as f:
+        try:
+            data = json.load(f)
+            archive = data if isinstance(data, list) else []
+        except: archive = []
 
-existing_links = {item['link'] for item in existing_news}
-new_articles = []
+existing_links = {item['link'] for item in archive}
+new_entries = []
 
 for url in RSS_FEEDS:
-    print(f"🌐 فحص المصدر: {url}")
     feed = feedparser.parse(url)
-    print(f"🔎 وجدنا {len(feed.entries)} خبر في هذا المصدر")
-    
     for entry in feed.entries:
-        if len(new_articles) >= 50: break
+        if len(new_entries) >= 50: break
         if entry.link in existing_links: continue
-        
         try:
-            print(f"📝 جاري معالجة: {entry.title[:50]}...")
-            article = Article(entry.link)
-            article.download()
-            article.parse()
-            
-            ai_data = get_detailed_article(entry.title, article.text, entry.summary if 'summary' in entry else "")
-            
-            # نظام الطوارئ: إذا فشل AI، استخدم البيانات الأصلية
-            if ai_data:
-                item = {
-                    "id": str(hash(entry.link)),
-                    "title": ai_data.get('seo_title', entry.title),
-                    "link": entry.link,
-                    "image": article.top_image if article.top_image else "https://via.placeholder.com/800",
-                    "category": ai_data.get('category', "أخبار عامة"),
-                    "body": ai_data.get('content', article.text[:1000]),
-                    "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-                }
-            else:
-                # إضافة الخبر حتى لو فشل الـ AI لكي لا يظهر الموقع فارغاً
-                item = {
-                    "id": str(hash(entry.link)),
-                    "title": entry.title,
-                    "link": entry.link,
-                    "image": article.top_image if article.top_image else "https://via.placeholder.com/800",
-                    "category": "أخبار عاجلة",
-                    "body": article.text[:1000] if article.text else entry.get('summary', 'لا يوجد تفاصيل'),
-                    "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-                }
-            
-            new_articles.append(item)
-            time.sleep(2) # استراحة بسيطة
-        except Exception as e:
-            print(f"❌ خطأ في معالجة خبر: {e}")
+            art = Article(entry.link)
+            art.download(); art.parse()
+            data = ai_process(entry.title, art.text)
+            item = {
+                "id": str(int(time.time() * 1000)),
+                "title": data['title'] if data else entry.title,
+                "link": entry.link,
+                "image": art.top_image if art.top_image else "https://via.placeholder.com/800x450",
+                "category": data['category'] if data else "عام",
+                "body": data['content'] if data else art.text[:1000],
+                "importance": data['importance'] if data else 5,
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "timestamp": int(time.time())
+            }
+            new_entries.append(item)
+            time.sleep(2)
+        except: continue
 
-# حفظ النتائج
-final_data = new_articles + existing_news
+# حفظ الكل (الجديد في البداية)
+final_archive = new_entries + archive
 with open('news.json', 'w', encoding='utf-8') as f:
-    json.dump(final_data[:200], f, ensure_ascii=False, indent=4)
-print(f"✅ تم الانتهاء! إجمالي الأخبار في الملف: {len(final_data[:200])}")
+    json.dump(final_archive, f, ensure_ascii=False, indent=4)
+print(f"✅ تم حفظ {len(new_entries)} خبر جديد. الإجمالي: {len(final_archive)}")
