@@ -17,27 +17,39 @@ import requests
 from urllib.parse import urlparse
 from datetime import datetime, timezone
 
-# ─── إعداد Gemini (مجاني) ────────────────────────────────────────────────────
+# ─── إعداد AI — Fallback تلقائي (Flash-Lite → Flash → Groq) ─────────────────
+
+# ── Gemini (مشترك بين Flash-Lite و Flash) ──
 try:
-    import google.generativeai as genai
-    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-    if GEMINI_API_KEY:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel(
-            'gemini-1.5-flash',
-            generation_config=genai.GenerationConfig(
-                temperature=0.7,
-                max_output_tokens=2048,
-            )
-        )
-        AI_ENABLED = True
-        print("✅ Gemini AI جاهز (مجاني)")
-    else:
-        AI_ENABLED = False
-        print("⚠️  GEMINI_API_KEY غير موجود — سيتم حفظ الأخبار بدون معالجة AI")
+    from google import genai as google_genai
+    from google.genai import types as genai_types
+    _GEMINI_LITE_KEY  = os.environ.get("GEMINI_API_KEY", "")
+    _GEMINI_FLASH_KEY = os.environ.get("GEMINI_FLASH_API_KEY", "") or _GEMINI_LITE_KEY
+    GEMINI_LITE_READY  = bool(_GEMINI_LITE_KEY)
+    GEMINI_FLASH_READY = bool(_GEMINI_FLASH_KEY)
+    if GEMINI_LITE_READY:
+        print("✅ Gemini 2.5 Flash-Lite جاهز  (1000 طلب/يوم)")
+    if GEMINI_FLASH_READY:
+        print("✅ Gemini 2.5 Flash جاهز        (250 طلب/يوم)")
 except Exception as e:
-    AI_ENABLED = False
-    print(f"⚠️  خطأ Gemini: {e}")
+    GEMINI_LITE_READY = GEMINI_FLASH_READY = False
+    print(f"⚠️  خطأ تهيئة Gemini: {e}")
+
+# ── Groq ──
+try:
+    from groq import Groq as GroqClient, RateLimitError as GroqRateLimit
+    _GROQ_KEY = os.environ.get("GROQ_API_KEY", "")
+    GROQ_READY = bool(_GROQ_KEY)
+    if GROQ_READY:
+        _groq_client = GroqClient(api_key=_GROQ_KEY)
+        print("✅ Groq LLaMA 3.3 70B جاهز      (14400 طلب/يوم)")
+except Exception as e:
+    GROQ_READY = False
+    print(f"⚠️  خطأ تهيئة Groq: {e}")
+
+AI_ENABLED = GEMINI_LITE_READY or GEMINI_FLASH_READY or GROQ_READY
+if not AI_ENABLED:
+    print("⚠️  لا يوجد أي AI key — سيتم حفظ الأخبار بدون معالجة AI")
 
 # ─── مصادر RSS لكل تصنيف (متعددة لضمان التغطية) ─────────────────────────────
 RSS_FEEDS = {
@@ -183,18 +195,13 @@ def get_source_name(url):
     except Exception:
         return ''
 
-# ─── معالجة Gemini AI ────────────────────────────────────────────────────────
+# ─── معالجة AI — Fallback تلقائي ────────────────────────────────────────────
 
-AI_CALLS = 0
+AI_CALLS  = 0
 AI_ERRORS = 0
 
-def ai_process(title, text, category):
-    global AI_CALLS, AI_ERRORS
-    if not AI_ENABLED or not text or len(text.strip()) < 80:
-        return None
-    AI_CALLS += 1
-    try:
-        prompt = f"""أنت رئيس تحرير صحفي محترف متخصص في الإعلام العربي.
+def _build_prompt(title, text, category):
+    return f"""أنت رئيس تحرير صحفي محترف متخصص في الإعلام العربي.
 
 أعد كتابة هذا الخبر كمقال صحفي تفصيلي ومشوق.
 
@@ -222,43 +229,112 @@ def ai_process(title, text, category):
   "isBreaking": false
 }}"""
 
-        resp = model.generate_content(prompt)
-        raw = resp.text.strip()
+def _parse_ai_response(raw):
+    """استخراج وتحقق من JSON الـ AI"""
+    raw = raw.strip()
+    # إزالة markdown code blocks
+    raw = re.sub(r'^```(?:json)?\s*', '', raw, flags=re.MULTILINE)
+    raw = re.sub(r'\s*```$', '', raw, flags=re.MULTILINE)
+    raw = raw.strip()
 
-        # استخراج JSON بأمان
-        json_match = re.search(r'\{[\s\S]*?\}(?=\s*$|\s*```)', raw)
-        if not json_match:
-            json_match = re.search(r'\{[\s\S]*\}', raw)
-        if not json_match:
-            return None
-
-        data = json.loads(json_match.group())
-        required = ['title', 'content', 'category']
-        if not all(k in data and data[k] for k in required):
-            return None
-
-        # تنظيف وتحقق
-        data['title'] = str(data['title'])[:120].strip()
-        data['content'] = str(data['content']).strip()
-        data['summary'] = str(data.get('summary', ''))[:300].strip()
-        data['importance'] = max(1, min(10, int(data.get('importance', 6))))
-        data['isBreaking'] = bool(data.get('isBreaking', False))
-        data['tags'] = [str(t)[:30] for t in data.get('tags', [])[:6] if t]
-        return data
-
-    except json.JSONDecodeError:
-        AI_ERRORS += 1
-        print(f"      ⚠️  Gemini JSON خطأ")
+    json_match = re.search(r'\{[\s\S]*?\}(?=\s*$|\s*```)', raw)
+    if not json_match:
+        json_match = re.search(r'\{[\s\S]*\}', raw)
+    if not json_match:
         return None
-    except Exception as e:
-        AI_ERRORS += 1
-        err_str = str(e).lower()
-        if 'quota' in err_str or 'rate' in err_str or '429' in err_str:
-            print(f"      ⏳ Gemini rate limit — انتظار 30 ثانية")
-            time.sleep(30)
-        else:
-            print(f"      ⚠️  Gemini خطأ: {e}")
+
+    data = json.loads(json_match.group())
+    required = ['title', 'content', 'category']
+    if not all(k in data and data[k] for k in required):
         return None
+
+    data['title']      = str(data['title'])[:120].strip()
+    data['content']    = str(data['content']).strip()
+    data['summary']    = str(data.get('summary', ''))[:300].strip()
+    data['importance'] = max(1, min(10, int(data.get('importance', 6))))
+    data['isBreaking'] = bool(data.get('isBreaking', False))
+    data['tags']       = [str(t)[:30] for t in data.get('tags', [])[:6] if t]
+    return data
+
+# ── Provider 1: Gemini 2.5 Flash-Lite ──
+def _call_gemini_lite(prompt):
+    client = google_genai.Client(api_key=_GEMINI_LITE_KEY)
+    resp = client.models.generate_content(
+        model="gemini-2.5-flash-lite-preview-06-17",
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(
+            max_output_tokens=2048,
+            temperature=0.7,
+        ),
+    )
+    return resp.text
+
+# ── Provider 2: Gemini 2.5 Flash ──
+def _call_gemini_flash(prompt):
+    client = google_genai.Client(api_key=_GEMINI_FLASH_KEY)
+    resp = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(
+            max_output_tokens=2048,
+            temperature=0.7,
+        ),
+    )
+    return resp.text
+
+# ── Provider 3: Groq LLaMA 3.3 70B ──
+def _call_groq(prompt):
+    resp = _groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": "أنت رئيس تحرير صحفي محترف. أجب بـ JSON فقط بدون أي نص إضافي."},
+            {"role": "user",   "content": prompt},
+        ],
+        max_tokens=2048,
+        temperature=0.7,
+    )
+    return resp.choices[0].message.content
+
+# ── قائمة الـ Providers بالترتيب ──
+_AI_PROVIDERS = []
+if GEMINI_LITE_READY:
+    _AI_PROVIDERS.append(("Gemini Flash-Lite", _call_gemini_lite))
+if GEMINI_FLASH_READY:
+    _AI_PROVIDERS.append(("Gemini Flash",      _call_gemini_flash))
+if GROQ_READY:
+    _AI_PROVIDERS.append(("Groq LLaMA 3.3",    _call_groq))
+
+def ai_process(title, text, category):
+    global AI_CALLS, AI_ERRORS
+    if not AI_ENABLED or not text or len(text.strip()) < 80:
+        return None
+
+    AI_CALLS += 1
+    prompt = _build_prompt(title, text, category)
+
+    for provider_name, provider_fn in _AI_PROVIDERS:
+        try:
+            raw = provider_fn(prompt)
+            if not raw or not raw.strip():
+                continue
+            data = _parse_ai_response(raw)
+            if data:
+                print(f"      🤖 [{provider_name}] ✅")
+                return data
+        except json.JSONDecodeError:
+            AI_ERRORS += 1
+            print(f"      ⚠️  [{provider_name}] JSON خطأ — جرّب التالي")
+        except Exception as e:
+            AI_ERRORS += 1
+            err_str = str(e).lower()
+            if 'quota' in err_str or 'rate' in err_str or '429' in err_str:
+                print(f"      ⏳ [{provider_name}] Rate limit — جرّب التالي")
+                time.sleep(5)
+            else:
+                print(f"      ⚠️  [{provider_name}] خطأ: {e} — جرّب التالي")
+
+    print(f"      ❌ جميع الـ AI providers فشلت لهذا الخبر")
+    return None
 
 # ─── تحميل الأرشيف القديم ────────────────────────────────────────────────────
 
@@ -468,7 +544,8 @@ final_archive.sort(
 
 total = len(final_archive)
 print(f"📦 إجمالي الأرشيف بعد الدمج: {total} خبر")
-print(f"🤖 أُعولج بـ AI: {AI_CALLS} خبر | فشل AI: {AI_ERRORS}")
+providers_str = " + ".join(p[0] for p in _AI_PROVIDERS) if _AI_PROVIDERS else "لا يوجد"
+print(f"🤖 أُعولج بـ AI: {AI_CALLS} خبر | فشل AI: {AI_ERRORS} | Providers: {providers_str}")
 
 # حفظ
 output = {
@@ -488,5 +565,5 @@ except Exception as e:
     sys.exit(1)
 
 print("=" * 60)
-print("✅ انتهى البوت — الدورة القادمة خلال 3 ساعات")
+print("✅ انتهى البوت — الدورة القادمة خلال 5 ساعات")
 print("=" * 60)
