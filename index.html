@@ -10,6 +10,11 @@
 <meta property="og:description" content="آخر الأخبار العربية والعالمية لحظة بلحظة">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#c0392b">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="بوابة الأنباء">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <!-- Adsterra Social Bar -->
@@ -404,11 +409,73 @@ body{padding-bottom:80px}
 /* منع أي overflow أفقي في كل الأحجام */
 html,body{overflow-x:hidden;max-width:100vw}
 *{box-sizing:border-box}
+
+/* ═══════════════════════════════════════
+   ميزة 1: PWA زر التثبيت
+═══════════════════════════════════════ */
+#pwa-install-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:600;transition:var(--transition);display:none;align-items:center;gap:6px}
+#pwa-install-btn.visible{display:flex}
+#pwa-install-btn:hover{background:var(--primary);border-color:var(--primary)}
+
+/* ═══════════════════════════════════════
+   ميزة 2: Infinite Scroll - مؤشر التحميل
+═══════════════════════════════════════ */
+#infinite-loader{text-align:center;padding:20px;display:none}
+#infinite-loader.active{display:block}
+.loader-dots{display:inline-flex;gap:6px}
+.loader-dots span{width:10px;height:10px;border-radius:50%;background:var(--primary);animation:dotBounce 1.2s infinite}
+.loader-dots span:nth-child(2){animation-delay:0.2s}
+.loader-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes dotBounce{0%,80%,100%{transform:scale(0.6);opacity:0.5}40%{transform:scale(1);opacity:1}}
+#infinite-sentinel{height:1px;width:100%}
+
+/* ═══════════════════════════════════════
+   ميزة 3: Breaking News Alert
+═══════════════════════════════════════ */
+#breaking-alert{position:fixed;top:0;left:0;right:0;z-index:9998;background:linear-gradient(135deg,#c0392b 0%,#922b21 100%);color:#fff;max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1);box-shadow:0 4px 20px rgba(192,57,43,0.5)}
+#breaking-alert.show{max-height:90px}
+.breaking-alert-inner{display:flex;align-items:center;gap:12px;padding:12px 20px;max-width:1400px;margin:auto}
+.breaking-pulse{width:14px;height:14px;border-radius:50%;background:#fff;flex-shrink:0;animation:alertPulse 1s infinite}
+@keyframes alertPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.6);opacity:1}70%{box-shadow:0 0 0 10px rgba(255,255,255,0);opacity:0.8}}
+.breaking-alert-label{background:rgba(0,0,0,0.25);border-radius:20px;padding:2px 10px;font-size:0.75rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+.breaking-alert-text{flex:1;font-size:0.9rem;font-weight:600;cursor:pointer;line-height:1.4}
+.breaking-alert-text:hover{text-decoration:underline}
+.breaking-alert-close{background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--transition)}
+.breaking-alert-close:hover{background:rgba(255,255,255,0.4)}
+
+/* ═══════════════════════════════════════
+   ميزة 4: تحكم القراءة داخل المقال
+═══════════════════════════════════════ */
+.reading-controls{display:flex;align-items:center;gap:8px;padding:10px 0 14px;margin-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.reading-controls-label{font-size:0.78rem;color:var(--text-muted);margin-left:auto}
+.read-ctrl-btn{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.85rem;font-weight:700;transition:var(--transition);line-height:1}
+.read-ctrl-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+#read-progress-ring{background:var(--primary);color:#fff;padding:4px 10px;border-radius:15px;font-size:0.72rem;font-weight:700;min-width:46px;text-align:center}
+#modal{overflow-y:auto}
+
+/* ═══════════════════════════════════════
+   ميزة 5: نقاط رئيسية ذكية
+═══════════════════════════════════════ */
+.key-points{background:linear-gradient(135deg,rgba(192,57,43,0.07),rgba(192,57,43,0.02));border:1px solid rgba(192,57,43,0.2);border-right:4px solid var(--primary);border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.key-points-title{font-size:0.9rem;font-weight:900;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.key-points ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.key-points ul li{font-size:0.9rem;line-height:1.6;color:var(--text);padding-right:20px;position:relative}
+.key-points ul li::before{content:"◆";position:absolute;right:0;color:var(--primary);font-size:0.6rem;top:7px}
 </style>
 </head>
 <body>
 
 <div id="reading-progress"></div>
+
+<!-- ميزة 3: Breaking News Alert -->
+<div id="breaking-alert">
+  <div class="breaking-alert-inner">
+    <div class="breaking-pulse"></div>
+    <span class="breaking-alert-label">🔴 عاجل</span>
+    <span class="breaking-alert-text" id="breaking-alert-text" onclick="breakingAlertClick()"></span>
+    <button class="breaking-alert-close" onclick="dismissBreaking()" title="إغلاق">✕</button>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -434,6 +501,8 @@ html,body{overflow-x:hidden;max-width:100vw}
       <div class="live-clock" id="live-clock">--:--:--</div>
       <button class="btn-icon" onclick="toggleDark()" title="وضع الليل" id="dark-btn">🌙</button>
       <button class="btn-icon" onclick="showBookmarks()" title="المحفوظات">🔖</button>
+      <!-- ميزة 1: PWA Install -->
+      <button id="pwa-install-btn" onclick="installPWA()" title="تثبيت التطبيق">📲 تثبيت</button>
     </div>
   </div>
   <div class="breaking-ticker" id="ticker-wrap">
@@ -526,6 +595,12 @@ html,body{overflow-x:hidden;max-width:100vw}
         <button class="btn-load" id="load-more-btn" onclick="loadMore()">
           <span id="load-more-txt">تحميل المزيد</span> ↓
         </button>
+      </div>
+
+      <!-- ميزة 2: Infinite Scroll -->
+      <div id="infinite-sentinel"></div>
+      <div id="infinite-loader">
+        <div class="loader-dots"><span></span><span></span><span></span></div>
       </div>
     </main>
 
@@ -676,8 +751,19 @@ html,body{overflow-x:hidden;max-width:100vw}
         <button class="art-action-btn" onclick="copyLink()">🔗 نسخ الرابط</button>
       </div>
 
+      <!-- ميزة 4: تحكم القراءة -->
+      <div class="reading-controls">
+        <button class="read-ctrl-btn" onclick="changeFontSize(-1)" title="تصغير الخط">A−</button>
+        <button class="read-ctrl-btn" onclick="changeFontSize(1)" title="تكبير الخط">A+</button>
+        <span id="read-progress-ring">0%</span>
+        <span class="reading-controls-label" id="m-read-time">⏱️ دقيقة واحدة</span>
+      </div>
+
       <!-- REACTIONS -->
       <div class="reactions-bar" id="m-reactions"></div>
+
+      <!-- ميزة 5: النقاط الرئيسية -->
+      <div id="m-key-points"></div>
 
       <!-- BODY -->
       <div class="article-body" id="m-body"></div>
@@ -815,6 +901,7 @@ function initUI() {
   filteredNews = [...allNews];
   currentPage = 1;
   renderGrid();
+  showBreakingAlert(allNews);
 }
 
 // ===================== CATEGORIES =====================
@@ -1119,6 +1206,13 @@ function openNews(id) {
   }
 
   loadComments(id);
+
+  // ميزة 4 + 5: تطبيق حجم الخط + النقاط الرئيسية + وقت القراءة
+  applyArticleFontSize();
+  document.getElementById('m-key-points').innerHTML = extractKeyPoints(n);
+  document.getElementById('m-read-time').textContent = buildReadTime(n);
+  document.getElementById('read-progress-ring').textContent = '0%';
+
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   document.getElementById('modal').scrollTop = 0;
@@ -1680,6 +1774,126 @@ function sendContactForm() {
   const mailto = `mailto:WorldNewsPortal914@gmail.com?subject=${encodeURIComponent(subject + ' — من: ' + name)}&body=${encodeURIComponent('الاسم: ' + name + '\nالبريد: ' + email + '\n\n' + msg)}`;
   window.open(mailto, '_blank');
   showToast('✅ جاري فتح تطبيق البريد...');
+}
+
+// ══════════════════════════════════════════════════════
+// ميزة 1: PWA — تثبيت الموقع كتطبيق على الجهاز
+// ══════════════════════════════════════════════════════
+let _pwaPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  document.getElementById('pwa-install-btn').classList.add('visible');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-install-btn').classList.remove('visible');
+  showToast('✅ تم تثبيت التطبيق بنجاح!');
+  _pwaPrompt = null;
+});
+async function installPWA() {
+  if (!_pwaPrompt) { showToast('📲 افتح الموقع في متصفح Chrome أو Edge للتثبيت'); return; }
+  _pwaPrompt.prompt();
+  const { outcome } = await _pwaPrompt.userChoice;
+  if (outcome === 'accepted') showToast('✅ جاري تثبيت التطبيق...');
+  _pwaPrompt = null;
+  document.getElementById('pwa-install-btn').classList.remove('visible');
+}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// ══════════════════════════════════════════════════════
+// ميزة 2: Infinite Scroll — تحميل تلقائي عند التمرير
+// ══════════════════════════════════════════════════════
+let _infiniteActive = false;
+const _infiniteObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !_infiniteActive) {
+      const wrap = document.getElementById('load-more-wrap');
+      const btn = document.getElementById('load-more-btn');
+      if (wrap && wrap.style.display !== 'none' && btn && !btn.disabled) {
+        _infiniteActive = true;
+        document.getElementById('infinite-loader').classList.add('active');
+        setTimeout(() => {
+          loadMore();
+          document.getElementById('infinite-loader').classList.remove('active');
+          _infiniteActive = false;
+        }, 600);
+      }
+    }
+  });
+}, { threshold: 0.1, rootMargin: '200px' });
+_infiniteObserver.observe(document.getElementById('infinite-sentinel'));
+
+// ══════════════════════════════════════════════════════
+// ميزة 3: Breaking News Alert — تنبيه الأخبار العاجلة
+// ══════════════════════════════════════════════════════
+let _breakingId = null;
+function showBreakingAlert(news) {
+  if (sessionStorage.getItem('breaking-dismissed-v2')) return;
+  const breaking = news.filter(n => n.isBreaking).slice(0, 1)[0];
+  if (!breaking) return;
+  _breakingId = breaking.id;
+  document.getElementById('breaking-alert-text').textContent = breaking.title;
+  setTimeout(() => document.getElementById('breaking-alert').classList.add('show'), 1500);
+  setTimeout(() => {
+    if (!sessionStorage.getItem('breaking-dismissed-v2')) dismissBreaking();
+  }, 12000);
+}
+function dismissBreaking() {
+  sessionStorage.setItem('breaking-dismissed-v2', '1');
+  document.getElementById('breaking-alert').classList.remove('show');
+}
+function breakingAlertClick() {
+  dismissBreaking();
+  if (_breakingId) openNews(_breakingId);
+}
+
+// ══════════════════════════════════════════════════════
+// ميزة 4: تحكم في القراءة — حجم الخط + مؤشر التقدم
+// ══════════════════════════════════════════════════════
+let _articleFontSize = parseInt(localStorage.getItem('art-font-size') || '16');
+function changeFontSize(delta) {
+  _articleFontSize = Math.max(13, Math.min(22, _articleFontSize + delta));
+  const body = document.getElementById('m-body');
+  if (body) body.style.fontSize = _articleFontSize + 'px';
+  localStorage.setItem('art-font-size', _articleFontSize);
+  showToast('🔤 حجم الخط: ' + _articleFontSize + 'px');
+}
+function applyArticleFontSize() {
+  const body = document.getElementById('m-body');
+  if (body) body.style.fontSize = _articleFontSize + 'px';
+}
+document.getElementById('modal-overlay').addEventListener('scroll', function() {
+  const total = this.scrollHeight - this.clientHeight;
+  if (total <= 0) return;
+  const pct = Math.min(100, Math.round((this.scrollTop / total) * 100));
+  const ring = document.getElementById('read-progress-ring');
+  if (ring) ring.textContent = pct + '%';
+});
+
+// ══════════════════════════════════════════════════════
+// ميزة 5: النقاط الرئيسية الذكية — استخراج أهم الجمل
+// ══════════════════════════════════════════════════════
+function extractKeyPoints(article) {
+  const raw = (article.body || '') + ' ' + (article.summary || '');
+  const plain = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const sentences = plain
+    .split(/(?<=[.!؟])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 50 && s.length < 280);
+  const unique = [...new Set(sentences)].slice(0, 3);
+  if (unique.length < 1) return '';
+  return `<div class="key-points">
+    <div class="key-points-title">⚡ أبرز النقاط</div>
+    <ul>${unique.map(p => `<li>${p}</li>`).join('')}</ul>
+  </div>`;
+}
+function buildReadTime(article) {
+  const words = ((article.body || '') + ' ' + (article.summary || ''))
+    .replace(/<[^>]+>/g, ' ').trim().split(/\s+/).length;
+  const mins = Math.max(1, Math.round(words / 200));
+  return mins === 1 ? '⏱️ دقيقة واحدة' : `⏱️ ${mins} دقائق`;
 }
 
 // ===================== INIT =====================

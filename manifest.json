@@ -1,0 +1,44 @@
+{
+  "name": "بوابة الأنباء العالمية",
+  "short_name": "الأنباء",
+  "description": "آخر الأخبار العربية والعالمية لحظة بلحظة مدعومة بالذكاء الاصطناعي",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a252f",
+  "theme_color": "#c0392b",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/c0392b/ffffff?text=%D8%A3",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/c0392b/ffffff?text=%D8%A3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["news", "education"],
+  "shortcuts": [
+    {
+      "name": "الأخبار العاجلة",
+      "short_name": "عاجل",
+      "description": "اقرأ الأخبار العاجلة",
+      "url": "/?cat=breaking",
+      "icons": [{ "src": "https://via.placeholder.com/96x96/c0392b/ffffff?text=%D8%B9", "sizes": "96x96" }]
+    },
+    {
+      "name": "آخر الأخبار",
+      "short_name": "أخبار",
+      "description": "آخر الأخبار",
+      "url": "/",
+      "icons": [{ "src": "https://via.placeholder.com/96x96/1a252f/ffffff?text=%D8%A3", "sizes": "96x96" }]
+    }
+  ]
+}
