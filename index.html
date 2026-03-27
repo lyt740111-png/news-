@@ -92,7 +92,7 @@ header{background:var(--header-bg);color:#fff;position:sticky;top:0;z-index:1000
 .ticker-track:hover{animation-play-state:paused}
 .ticker-item{display:flex;align-items:center;gap:8px;cursor:pointer}
 .ticker-item::after{content:"•";margin-right:8px;opacity:0.5}
-@keyframes ticker{0%{transform:translateX(-100%)}100%{transform:translateX(100vw)}}
+@keyframes ticker{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
 
 /* NAV CATEGORIES */
 .nav-bar{background:var(--secondary-light);overflow-x:auto;scrollbar-width:none}
@@ -352,10 +352,11 @@ body{padding-bottom:80px}
 
   /* الهيدر */
   .header-top{flex-wrap:wrap;gap:6px}
-  .header-actions{flex-wrap:wrap;gap:6px;justify-content:flex-end;width:100%}
+  .header-actions{flex-wrap:nowrap;gap:6px;justify-content:flex-end;width:100%}
+  .live-clock{display:none}
+  #pwa-install-btn{display:none!important}
   .search-box{flex:1;min-width:0}
   .search-box input{width:100%;min-width:0}
-  .live-clock{font-size:0.72rem;padding:3px 7px}
 
   /* الشريط العلوي */
   .stats-bar{flex-wrap:wrap;gap:6px;padding:10px 14px}
@@ -1997,12 +1998,14 @@ function buildReadTime(article) {
 function aiScoreArticle(n) {
   let score = 0;
   if (n.isBreaking) score += 100;
-  if (n.importance === 'high') score += 60;
-  if (n.importance === 'medium') score += 30;
+  // importance can be a number (1-10) or a string ('high'/'medium')
+  const imp = n.importance;
+  if (imp === 'high' || (typeof imp === 'number' && imp >= 7)) score += 60;
+  else if (imp === 'medium' || (typeof imp === 'number' && imp >= 4)) score += 30;
   score += Math.min((n.viewCount || 0) / 50, 50);
   score += Math.min((n.commentsCount || 0) * 2, 30);
   const now = new Date();
-  const pub = new Date(n.date);
+  const pub = parseNewsDate(n.date);
   const ageHours = (now - pub) / 3600000;
   if (ageHours < 6) score += 40;
   else if (ageHours < 24) score += 20;
@@ -2121,6 +2124,19 @@ function toggleFilterPanel() {
   document.getElementById('filter-panel').classList.toggle('open');
 }
 
+function parseNewsDate(str) {
+  if (!str) return new Date(0);
+  // Handle "YYYY-MM-DD HH:MM" format (main format used by the news bot)
+  const m1 = str.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s]+(\d{2}):(\d{2}))?/);
+  if (m1) return new Date(+m1[1], +m1[2]-1, +m1[3], +(m1[4]||0), +(m1[5]||0));
+  // Handle "DD-MM-YYYY HH:MM" format (fallback)
+  const m2 = str.match(/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if (m2) return new Date(+m2[3], +m2[2]-1, +m2[1], +(m2[4]||0), +(m2[5]||0));
+  // Final fallback for standard ISO and other formats
+  const d = new Date(str);
+  return isNaN(d) ? new Date(0) : d;
+}
+
 function toggleFilterChip(el) {
   const filterType = el.dataset.filter;
   if (filterType === 'sort') {
@@ -2140,9 +2156,11 @@ function applyAdvancedFilters() {
   const imp = activeAdvancedFilters['importance'];
   if (imp && imp.size > 0) {
     result = result.filter(n => {
+      const impVal = n.importance;
+      const isHigh = impVal === 'high' || (typeof impVal === 'number' && impVal >= 7);
       if (imp.has('breaking') && n.isBreaking) return true;
-      if (imp.has('high') && n.importance === 'high' && !n.isBreaking) return true;
-      if (imp.has('normal') && n.importance !== 'high' && !n.isBreaking) return true;
+      if (imp.has('high') && isHigh && !n.isBreaking) return true;
+      if (imp.has('normal') && !isHigh && !n.isBreaking) return true;
       return false;
     });
   }
@@ -2150,7 +2168,7 @@ function applyAdvancedFilters() {
   if (period && period.size > 0) {
     const now = new Date();
     result = result.filter(n => {
-      const pub = new Date(n.date);
+      const pub = parseNewsDate(n.date);
       const diff = (now - pub) / 86400000;
       if (period.has('today') && diff < 1) return true;
       if (period.has('week') && diff < 7) return true;
@@ -2159,7 +2177,7 @@ function applyAdvancedFilters() {
     });
   }
   if (activeAdvancedSort === 'ai') result = aiSortNews(result);
-  else if (activeAdvancedSort === 'newest') result.sort((a,b) => new Date(b.date) - new Date(a.date));
+  else if (activeAdvancedSort === 'newest') result.sort((a,b) => parseNewsDate(b.date) - parseNewsDate(a.date));
   else if (activeAdvancedSort === 'popular') result.sort((a,b) => (b.viewCount||0) - (a.viewCount||0));
   else if (activeAdvancedSort === 'comments') result.sort((a,b) => (b.commentsCount||0) - (a.commentsCount||0));
   filteredNews = result;
