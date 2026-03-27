@@ -2,7 +2,7 @@ name: Auto Update AI News
 
 on:
   schedule:
-    - cron: "0 */5 * * *"   # كل 5 ساعات
+    - cron: "*/5 * * * *"   
   workflow_dispatch:
 
 jobs:
