@@ -3,44 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نبض العالم | أخبار بالذكاء الاصطناعي</title>
+    <title>نبض العالم | أخبار مفصلة بالذكاء الاصطناعي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #e63946; --dark: #1d3557; --light: #f1faee; }
         body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
-        header { background: var(--dark); color: white; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        header h1 { margin: 0; font-weight: 900; letter-spacing: 1px; }
-        header p { margin: 5px 0 0; color: #a8dadc; font-size: 14px; }
-        
-        .filters { text-align: center; padding: 20px; background: white; margin-bottom: 20px; }
-        .filter-btn { background: none; border: 2px solid var(--dark); color: var(--dark); padding: 8px 20px; border-radius: 20px; cursor: pointer; margin: 5px; font-family: 'Cairo'; font-weight: bold; transition: 0.3s; }
-        .filter-btn:hover, .filter-btn.active { background: var(--dark); color: white; }
-
-        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 0 20px 40px; max-width: 1200px; margin: auto; }
-        .news-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.3s; position: relative; }
-        .news-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .news-img { width: 100%; height: 180px; object-fit: cover; }
-        .category-badge { position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .importance-badge { position: absolute; top: 10px; left: 10px; background: #ffb703; color: var(--dark); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        header { background: var(--dark); color: white; padding: 20px; text-align: center; }
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: auto; }
+        .news-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .news-img { width: 100%; height: 200px; object-fit: cover; }
         .news-content { padding: 15px; }
-        .news-title { font-size: 18px; font-weight: 700; color: var(--dark); margin: 0 0 10px; line-height: 1.4; }
-        .news-date { font-size: 12px; color: #888; }
-        .read-more { display: inline-block; margin-top: 15px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        .read-btn { display: block; width: 100%; text-align: center; background: var(--primary); color: white; padding: 10px; text-decoration: none; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Cairo'; }
+        
+        /* تصميم نافذة قراءة المقال المفصل */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-content { background-color: white; margin: 5% auto; padding: 30px; border-radius: 15px; width: 90%; max-width: 800px; position: relative; }
+        .close-btn { position: absolute; top: 15px; left: 20px; font-size: 30px; font-weight: bold; cursor: pointer; color: red; }
+        .article-img { width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
+        .article-body { font-size: 18px; line-height: 1.8; color: #333; margin-bottom: 30px;}
+        .comments-section { border-top: 2px solid #ddd; padding-top: 20px; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>📰 نبض العالم</h1>
-        <p>أخبار مجمّعة ومصنّفة ومُرتبة بواسطة الذكاء الاصطناعي</p>
+        <h1>📰 نبض العالم الإخباري</h1>
+        <p>تغطية شاملة ومقالات مفصلة تُدار بالذكاء الاصطناعي بنسبة 100%</p>
     </header>
 
-    <div class="filters" id="filters-container">
-        <!-- الأزرار ستضاف هنا برمجياً -->
+    <div class="news-grid" id="news-container">
+        <h3 style="text-align:center; width: 100%;">جاري تحميل أحدث التقارير...</h3>
     </div>
 
-    <div class="news-grid" id="news-container">
-        <h3 style="text-align:center; width: 100%;">جاري تحميل الأخبار...</h3>
+    <!-- نافذة قراءة المقال المفصل -->
+    <div id="articleModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img id="modalImg" class="article-img" src="" alt="صورة الخبر">
+            <h2 id="modalTitle" style="color: var(--dark);"></h2>
+            <p style="color: gray; font-size: 14px;" id="modalDate"></p>
+            <div id="modalBody" class="article-body"></div>
+            
+            <!-- قسم التعليقات (Disqus) -->
+            <div class="comments-section">
+                <h3>💬 التعليقات</h3>
+                <div id="disqus_thread"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -48,57 +57,25 @@
 
         async function fetchNews() {
             try {
-                // قراءة ملف الـ JSON الذي يصنعه البوت
                 const response = await fetch('news.json');
                 allNews = await response.json();
-                
-                extractCategories();
                 displayNews(allNews);
             } catch (error) {
-                document.getElementById('news-container').innerHTML = "<h3 style='text-align:center; color:red;'>عذراً، لم يتم العثور على أخبار بعد. سيبدأ البوت بالعمل قريباً.</h3>";
-            }
-        }
-
-        function extractCategories() {
-            const categories =["الكل", ...new Set(allNews.map(n => n.category))];
-            const filterContainer = document.getElementById('filters-container');
-            filterContainer.innerHTML = "";
-            
-            categories.forEach(cat => {
-                const btn = document.createElement('button');
-                btn.className = `filter-btn ${cat === 'الكل' ? 'active' : ''}`;
-                btn.innerText = cat;
-                btn.onclick = () => filterNews(cat, btn);
-                filterContainer.appendChild(btn);
-            });
-        }
-
-        function filterNews(category, btnElement) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            if (category === "الكل") {
-                displayNews(allNews);
-            } else {
-                const filtered = allNews.filter(n => n.category === category);
-                displayNews(filtered);
+                document.getElementById('news-container').innerHTML = "<h3>لم يتم العثور على أخبار. تأكد من تشغيل البوت.</h3>";
             }
         }
 
         function displayNews(newsArray) {
             const container = document.getElementById('news-container');
             container.innerHTML = "";
-
-            newsArray.forEach(news => {
+            newsArray.forEach((news, index) => {
                 const card = `
                     <div class="news-card">
-                        <span class="category-badge">${news.category}</span>
-                        ${news.importance >= 8 ? '<span class="importance-badge">🔥 عاجل ومهم</span>' : ''}
-                        <img src="${news.image}" class="news-img" alt="صورة الخبر">
+                        <img src="${news.image}" class="news-img" alt="صورة">
                         <div class="news-content">
-                            <h3 class="news-title">${news.title}</h3>
-                            <span class="news-date">⏳ ${news.date}</span><br>
-                            <a href="${news.original_link}" target="_blank" class="read-more">اقرأ التفاصيل 🔗</a>
+                            <span style="color: #e63946; font-weight: bold; font-size: 12px;">${news.category}</span>
+                            <h3 style="margin: 10px 0;">${news.title}</h3>
+                            <button class="read-btn" onclick="openArticle(${index})">اقرأ التقرير المفصل 📖</button>
                         </div>
                     </div>
                 `;
@@ -106,7 +83,49 @@
             });
         }
 
-        // تشغيل الدالة عند فتح الصفحة
+        function openArticle(index) {
+            const news = allNews[index];
+            document.getElementById('modalTitle').innerText = news.title;
+            document.getElementById('modalImg').src = news.image;
+            document.getElementById('modalDate').innerText = "تاريخ النشر: " + news.date;
+            document.getElementById('modalBody').innerHTML = news.detailed_article;
+            document.getElementById('articleModal').style.display = "block";
+
+            // تحميل وتحديث تعليقات Disqus بناءً على ID الخبر
+            loadDisqus(news.id, news.original_link);
+        }
+
+        function closeModal() {
+            document.getElementById('articleModal').style.display = "none";
+        }
+
+        // إعداد نظام تعليقات Disqus
+        function loadDisqus(newsId, newsUrl) {
+            // === مهم جداً: ضع اسم موقعك في ديسكاس هنا ===
+            var disqus_shortname = 'YOUR_DISQUS_SHORTNAME'; 
+            
+            if (window.DISQUS) {
+                DISQUS.reset({
+                    reload: true,
+                    config: function () {  
+                        this.page.identifier = newsId;  
+                        this.page.url = "https://yourwebsite.com/news#" + newsId;
+                    }
+                });
+            } else {
+                window.disqus_config = function () {
+                    this.page.identifier = newsId;
+                    this.page.url = "https://yourwebsite.com/news#" + newsId;
+                };
+                (function() {
+                    var d = document, s = d.createElement('script');
+                    s.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+                    s.setAttribute('data-timestamp', +new Date());
+                    (d.head || d.body).appendChild(s);
+                })();
+            }
+        }
+
         fetchNews();
     </script>
 </body>
