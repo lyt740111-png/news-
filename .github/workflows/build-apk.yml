@@ -1,10 +1,10 @@
-name: 🔨 Build Admin APK
+name: Build Admin APK
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'رقم الإصدار (مثال: 1.0.1)'
+        description: 'Version number (e.g. 1.0.1)'
         required: false
         default: '1.0.0'
   push:
@@ -19,81 +19,74 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: ☕ Setup Java 17
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: 🔧 Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -5
 
-      - name: 📦 Setup Gradle Wrapper
+      - name: Download Gradle 8.4 and Generate Wrapper
         working-directory: admin-app
         run: |
-          gradle wrapper --gradle-version 8.4 --distribution-type bin
-        continue-on-error: true
+          GRADLE_VERSION=8.4
+          wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -O gradle.zip
+          unzip -q gradle.zip
+          export PATH="$PWD/gradle-${GRADLE_VERSION}/bin:$PATH"
+          gradle wrapper --gradle-version=${GRADLE_VERSION} --distribution-type=bin
+          chmod +x gradlew
+          rm -rf gradle.zip gradle-${GRADLE_VERSION}
 
-      - name: 🔐 Make gradlew Executable
+      - name: Build Debug APK
         working-directory: admin-app
-        run: chmod +x gradlew
-
-      - name: 🏗️ Build Debug APK
-        working-directory: admin-app
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
-
-      - name: 🏗️ Build Release APK (unsigned)
-        working-directory: admin-app
-        run: ./gradlew assembleRelease --no-daemon
-        continue-on-error: true
-
-      - name: 📁 Find APK Files
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
         run: |
-          find admin-app -name "*.apk" -type f
-          echo "APK_DEBUG=$(find admin-app -name '*debug*.apk' | head -1)" >> $GITHUB_ENV
-          echo "APK_RELEASE=$(find admin-app -name '*release*.apk' | head -1)" >> $GITHUB_ENV
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: 📱 Upload Debug APK
+      - name: Find APK
+        id: apk
+        run: |
+          APK=$(find admin-app -name "*.apk" -type f | head -1)
+          echo "path=$APK" >> $GITHUB_OUTPUT
+          echo "Found APK: $APK"
+          ls -lh "$APK"
+
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WorldNewsAdmin-debug-${{ github.event.inputs.version || '1.0.0' }}
-          path: ${{ env.APK_DEBUG }}
+          name: WorldNewsAdmin-v${{ github.event.inputs.version || '1.0.0' }}
+          path: ${{ steps.apk.outputs.path }}
           retention-days: 30
 
-      - name: 📱 Upload Release APK
-        uses: actions/upload-artifact@v4
-        if: env.APK_RELEASE != ''
-        with:
-          name: WorldNewsAdmin-release-${{ github.event.inputs.version || '1.0.0' }}
-          path: ${{ env.APK_RELEASE }}
-          retention-days: 30
-
-      - name: 🚀 Create GitHub Release
+      - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: admin-v${{ github.event.inputs.version || '1.0.0' }}
-          name: "📱 Admin App v${{ github.event.inputs.version || '1.0.0' }}"
+          name: "Admin App v${{ github.event.inputs.version || '1.0.0' }}"
           body: |
-            ## 📱 لوحة تحكم بوابة الأنباء العالمية
-            
+            ## لوحة تحكم بوابة الأنباء العالمية
+
             ### كيفية التثبيت:
-            1. حمّل ملف `WorldNewsAdmin-debug.apk`
-            2. على هاتفك: الإعدادات ← الأمان ← السماح بمصادر غير معروفة
+            1. حمّل ملف APK من قسم Assets أدناه
+            2. على هاتفك: الإعدادات - الأمان - السماح بمصادر غير معروفة
             3. افتح ملف الـ APK وثبّته
-            
+
             ### الميزات:
-            - ✅ إضافة وتعديل وحذف الأخبار
-            - ✅ إدارة التصنيفات
-            - ✅ تشغيل بوت الأخبار يدوياً
-            - ✅ بناء APK جديد من داخل التطبيق
-            - ✅ تعديل ملفات الموقع مباشرة
-            - ✅ عرض سجل GitHub Actions
-          files: |
-            ${{ env.APK_DEBUG }}
+            - اضافة وتعديل وحذف الأخبار
+            - ادارة التصنيفات
+            - تشغيل بوت الأخبار يدوياً
+            - تعديل ملفات الموقع مباشرة
+            - عرض سجل GitHub Actions
+          files: ${{ steps.apk.outputs.path }}
           draft: false
           prerelease: false
         env:
