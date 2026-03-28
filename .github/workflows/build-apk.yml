@@ -28,54 +28,61 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK Environment
+      - name: Show Android SDK Info
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ANDROID_SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          echo "Using SDK: $ANDROID_SDK"
-          ls "$ANDROID_SDK" || true
-          # Accept licenses
-          yes | "$ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || \
-          yes | "$ANDROID_SDK/tools/bin/sdkmanager" --licenses 2>/dev/null || true
-          # Install required components
-          "$ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager" \
-            "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -5 || true
-          # Create local.properties
-          echo "sdk.dir=$ANDROID_SDK" > admin-app/local.properties
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "$SDK/platforms/" || true
+          ls "$SDK/build-tools/" || true
+
+      - name: Create local.properties
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          echo "sdk.dir=$SDK" > admin-app/local.properties
           cat admin-app/local.properties
 
-      - name: Download Gradle 8.4 and Generate Wrapper
+      - name: Setup Gradle 8.4
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp/
+          echo "GRADLE_HOME=/tmp/gradle-8.4" >> $GITHUB_ENV
+          echo "/tmp/gradle-8.4/bin" >> $GITHUB_PATH
+          /tmp/gradle-8.4/bin/gradle --version
+
+      - name: Generate Gradle Wrapper
         working-directory: admin-app
         run: |
-          GRADLE_VERSION=8.4
-          echo "Downloading Gradle ${GRADLE_VERSION}..."
-          wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /tmp/
-          GRADLE_BIN="/tmp/gradle-${GRADLE_VERSION}/bin/gradle"
-          chmod +x $GRADLE_BIN
-          $GRADLE_BIN --version
-          echo "Generating Gradle wrapper..."
-          $GRADLE_BIN wrapper --gradle-version=${GRADLE_VERSION} --distribution-type=bin
+          gradle wrapper --gradle-version=8.4 --distribution-type=bin
           chmod +x gradlew
           ls -la gradle/wrapper/
-          echo "Wrapper generated successfully."
 
       - name: Build Debug APK
         working-directory: admin-app
         run: |
-          ANDROID_SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          export ANDROID_HOME="$ANDROID_SDK"
-          echo "Building with ANDROID_HOME=$ANDROID_HOME"
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          export ANDROID_HOME="$SDK"
+          export ANDROID_SDK_ROOT="$SDK"
+          ./gradlew assembleDebug --no-daemon --stacktrace --info 2>&1 | tee /tmp/build.log
+          echo "Exit code: ${PIPESTATUS[0]}"
+
+      - name: Show Build Errors (if failed)
+        if: failure()
+        run: |
+          echo "=== LAST 200 LINES OF BUILD LOG ==="
+          tail -200 /tmp/build.log || echo "No log found"
 
       - name: Find APK
         id: apk
         run: |
           APK=$(find admin-app -name "*.apk" -type f | head -1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: No APK found!"
+            exit 1
+          fi
           echo "Found: $APK"
           echo "path=$APK" >> $GITHUB_OUTPUT
-          ls -lh "$APK" || echo "APK not found"
+          ls -lh "$APK"
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
@@ -85,7 +92,7 @@ jobs:
           retention-days: 30
 
       - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch' && steps.apk.outputs.path != ''
+        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: admin-v${{ github.event.inputs.version || '1.0.0' }}
@@ -103,7 +110,6 @@ jobs:
             - ادارة التصنيفات
             - تشغيل بوت الأخبار يدوياً
             - تعديل ملفات الموقع مباشرة
-            - عرض سجل GitHub Actions
           files: ${{ steps.apk.outputs.path }}
           draft: false
           prerelease: false
