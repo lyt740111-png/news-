@@ -28,34 +28,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Show Android SDK Info
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          ls "$SDK/platforms/" || true
-          ls "$SDK/build-tools/" || true
-
-      - name: Create local.properties
+      - name: Setup Android SDK
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          echo "SDK path: $SDK"
           echo "sdk.dir=$SDK" > admin-app/local.properties
-          cat admin-app/local.properties
+          echo "Platforms available:"
+          ls "$SDK/platforms/" 2>/dev/null || true
+          echo "Build-tools available:"
+          ls "$SDK/build-tools/" 2>/dev/null || true
 
       - name: Setup Gradle 8.4
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/
-          echo "GRADLE_HOME=/tmp/gradle-8.4" >> $GITHUB_ENV
           echo "/tmp/gradle-8.4/bin" >> $GITHUB_PATH
           /tmp/gradle-8.4/bin/gradle --version
-
-      - name: Generate Gradle Wrapper
-        working-directory: admin-app
-        run: |
-          gradle wrapper --gradle-version=8.4 --distribution-type=bin
-          chmod +x gradlew
-          ls -la gradle/wrapper/
 
       - name: Build Debug APK
         working-directory: admin-app
@@ -63,32 +51,26 @@ jobs:
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           export ANDROID_HOME="$SDK"
           export ANDROID_SDK_ROOT="$SDK"
-          ./gradlew assembleDebug --no-daemon --stacktrace --info 2>&1 | tee /tmp/build.log
-          echo "Exit code: ${PIPESTATUS[0]}"
+          echo "=== Starting build with Gradle ==="
+          gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Show Build Errors (if failed)
-        if: failure()
+      - name: Find and Upload APK
         run: |
-          echo "=== LAST 200 LINES OF BUILD LOG ==="
-          tail -200 /tmp/build.log || echo "No log found"
-
-      - name: Find APK
-        id: apk
-        run: |
-          APK=$(find admin-app -name "*.apk" -type f | head -1)
+          APK=$(find admin-app -name "*debug*.apk" -type f | head -1)
           if [ -z "$APK" ]; then
-            echo "ERROR: No APK found!"
+            echo "debug APK not found, searching all apks..."
+            find admin-app -name "*.apk" -type f
             exit 1
           fi
-          echo "Found: $APK"
-          echo "path=$APK" >> $GITHUB_OUTPUT
+          echo "Found APK: $APK"
           ls -lh "$APK"
+          echo "APK_PATH=$APK" >> $GITHUB_ENV
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WorldNewsAdmin-v${{ github.event.inputs.version || '1.0.0' }}
-          path: ${{ steps.apk.outputs.path }}
+          path: ${{ env.APK_PATH }}
           retention-days: 30
 
       - name: Create GitHub Release
@@ -110,7 +92,7 @@ jobs:
             - ادارة التصنيفات
             - تشغيل بوت الأخبار يدوياً
             - تعديل ملفات الموقع مباشرة
-          files: ${{ steps.apk.outputs.path }}
+          files: ${{ env.APK_PATH }}
           draft: false
           prerelease: false
         env:
