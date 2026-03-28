@@ -3,561 +3,601 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>لوحة تحكم بوابة الأنباء العالمية</title>
+<title>لوحة تحكم بوابة الأنباء</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg: #0f0f1a;
-    --surface: #1a1a2e;
-    --surface2: #16213e;
-    --accent: #e94560;
-    --accent2: #0f3460;
-    --text: #eaeaea;
-    --text2: #a0a0b0;
-    --success: #2ecc71;
-    --warning: #f39c12;
-    --danger: #e74c3c;
-    --info: #3498db;
-    --border: #2a2a4a;
-    --radius: 12px;
-    --shadow: 0 4px 20px rgba(0,0,0,0.4);
-  }
-  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; direction: rtl; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg:#0f0f1a; --surface:#1a1a2e; --surface2:#16213e; --surface3:#0d1117;
+  --accent:#e94560; --accent2:#0f3460; --text:#eaeaea; --text2:#8b949e;
+  --success:#2ecc71; --warn:#f39c12; --danger:#e74c3c; --info:#58a6ff;
+  --border:#21262d; --radius:10px; --shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; direction:rtl; overflow-x:hidden; }
 
-  /* Login Screen */
-  #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: linear-gradient(135deg, #0f0f1a, #1a1a2e, #0f3460); }
-  .login-card { background: var(--surface); border-radius: 20px; padding: 40px 30px; width: 100%; max-width: 400px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-  .login-logo { text-align: center; margin-bottom: 30px; }
-  .login-logo h1 { color: var(--accent); font-size: 22px; margin-top: 10px; }
-  .login-logo p { color: var(--text2); font-size: 13px; margin-top: 5px; }
-  .logo-icon { width: 70px; height: 70px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 30px; }
-  .form-group { margin-bottom: 18px; }
-  .form-group label { display: block; margin-bottom: 8px; color: var(--text2); font-size: 13px; font-weight: 600; }
-  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 14px; direction: ltr; text-align: left; outline: none; transition: border 0.2s; font-family: inherit; }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
-  .form-group textarea { resize: vertical; min-height: 80px; }
-  .form-group small { color: var(--text2); font-size: 11px; margin-top: 5px; display: block; }
-  .btn { padding: 12px 20px; border: none; border-radius: var(--radius); cursor: pointer; font-size: 14px; font-weight: 700; transition: all 0.2s; width: 100%; font-family: inherit; }
-  .btn-primary { background: linear-gradient(135deg, var(--accent), #c0392b); color: white; }
-  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-success { background: var(--success); color: white; }
-  .btn-danger { background: var(--danger); color: white; }
-  .btn-warning { background: var(--warning); color: white; }
-  .btn-info { background: var(--info); color: white; }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-sm { padding: 7px 14px; font-size: 12px; width: auto; border-radius: 8px; }
+/* ── LOGIN ── */
+#loginScreen { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#0f3460); }
+.login-card { background:var(--surface); border-radius:20px; padding:36px 28px; width:100%; max-width:420px; box-shadow:var(--shadow); border:1px solid var(--border); }
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo .icon { width:72px; height:72px; background:linear-gradient(135deg,var(--accent),#c0392b); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:32px; }
+.login-logo h1 { color:var(--accent); font-size:20px; }
+.login-logo p { color:var(--text2); font-size:12px; margin-top:4px; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; margin-bottom:7px; color:var(--text2); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--radius); color:var(--text); font-size:14px; direction:ltr; text-align:left;
+  outline:none; transition:border 0.2s; font-family:monospace;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent); }
+.form-group small { color:var(--text2); font-size:11px; margin-top:5px; display:block; }
+.form-group textarea { resize:vertical; min-height:70px; font-family:inherit; direction:rtl; text-align:right; }
+.alert { padding:10px 14px; border-radius:var(--radius); font-size:13px; margin:10px 0; }
+.alert-error { background:rgba(231,76,60,0.2); border:1px solid var(--danger); color:#ff7979; }
+.alert-success { background:rgba(46,204,113,0.2); border:1px solid var(--success); color:#6bffb8; }
+.alert-info { background:rgba(88,166,255,0.15); border:1px solid var(--info); color:var(--info); }
+.alert-warn { background:rgba(243,156,18,0.15); border:1px solid var(--warn); color:var(--warn); }
 
-  /* App Layout */
-  #app { display: none; flex-direction: column; min-height: 100vh; }
-  .top-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-  .top-bar h2 { font-size: 16px; color: var(--text); }
-  .top-bar-actions { display: flex; gap: 10px; align-items: center; }
-  .badge { background: var(--accent); color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+/* ── BUTTONS ── */
+.btn { padding:11px 18px; border:none; border-radius:var(--radius); cursor:pointer; font-size:13px; font-weight:700; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
+.btn-block { width:100%; justify-content:center; }
+.btn-primary { background:linear-gradient(135deg,var(--accent),#c0392b); color:#fff; }
+.btn-success { background:var(--success); color:#fff; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-warn { background:var(--warn); color:#fff; }
+.btn-info { background:var(--info); color:#0d1117; }
+.btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-sm { padding:6px 12px; font-size:12px; border-radius:7px; }
+.btn:active { transform:scale(0.97); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-  /* Navigation */
-  .nav-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 8px 0; display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 2px; cursor: pointer; transition: color 0.2s; color: var(--text2); gap: 3px; border: none; background: none; font-family: inherit; }
-  .nav-item.active { color: var(--accent); }
-  .nav-item span:first-child { font-size: 20px; }
-  .nav-item span:last-child { font-size: 10px; font-weight: 600; }
-  .content { flex: 1; padding: 16px; padding-bottom: 80px; overflow-y: auto; }
+/* ── APP LAYOUT ── */
+#app { display:none; flex-direction:column; height:100vh; overflow:hidden; }
+.top-bar { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; box-shadow:0 2px 10px rgba(0,0,0,0.4); }
+.top-bar-left { display:flex; align-items:center; gap:10px; }
+.top-bar h2 { font-size:14px; color:var(--text); }
+.repo-badge { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:3px 8px; font-size:11px; color:var(--text2); font-family:monospace; direction:ltr; }
+.top-bar-right { display:flex; gap:8px; align-items:center; }
 
-  /* Cards */
-  .card { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--text); display: flex; align-items: center; gap: 8px; }
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .stat-card { background: var(--surface2); border-radius: var(--radius); padding: 16px; text-align: center; border: 1px solid var(--border); }
-  .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
-  .stat-card .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+/* ── NAV ── */
+.nav-bar { background:var(--surface); border-top:1px solid var(--border); display:flex; flex-shrink:0; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; padding:8px 2px 6px; cursor:pointer; color:var(--text2); gap:2px; border:none; background:none; font-family:inherit; transition:color 0.2s; position:relative; }
+.nav-item.active { color:var(--accent); }
+.nav-item.active::after { content:''; position:absolute; top:0; left:20%; right:20%; height:2px; background:var(--accent); border-radius:0 0 3px 3px; }
+.nav-item .nav-icon { font-size:18px; }
+.nav-item .nav-label { font-size:9px; font-weight:600; }
 
-  /* News List */
-  .news-item { background: var(--surface2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; border: 1px solid var(--border); position: relative; }
-  .news-item-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
-  .news-item-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-  .news-item-actions { display: flex; gap: 8px; }
-  .tag { background: var(--accent2); color: var(--text); padding: 3px 8px; border-radius: 6px; font-size: 11px; }
-  .tag.urgent { background: var(--accent); }
-  .tag.category { background: #1e3a5f; }
-  .date-text { color: var(--text2); font-size: 11px; }
+/* ── CONTENT ── */
+.content-area { flex:1; overflow-y:auto; }
+.page { display:none; padding:14px; padding-bottom:10px; }
+.page.active { display:block; }
 
-  /* Modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: flex-end; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-height: 90vh; overflow-y: auto; border-top: 2px solid var(--accent); }
-  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; color: var(--accent); }
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-  .modal-actions .btn { flex: 1; }
+/* ── CARDS ── */
+.card { background:var(--surface); border-radius:var(--radius); padding:14px; margin-bottom:12px; border:1px solid var(--border); }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.card-title { font-size:14px; font-weight:700; display:flex; align-items:center; gap:7px; }
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.stat-card { background:var(--surface2); border-radius:var(--radius); padding:14px; text-align:center; border:1px solid var(--border); }
+.stat-value { font-size:26px; font-weight:700; color:var(--accent); }
+.stat-label { font-size:11px; color:var(--text2); margin-top:3px; }
 
-  /* Tabs */
-  .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-  .tab { padding: 8px 16px; border-radius: 20px; background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px; white-space: nowrap; border: 1px solid var(--border); font-weight: 600; font-family: inherit; }
-  .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+/* ── NEWS ── */
+.news-item { background:var(--surface2); border-radius:var(--radius); padding:12px; margin-bottom:8px; border:1px solid var(--border); border-right:3px solid var(--border); }
+.news-item.breaking { border-right-color:var(--accent); }
+.news-item-img { width:60px; height:45px; object-fit:cover; border-radius:6px; float:left; margin-left:10px; }
+.news-item-title { font-size:13px; font-weight:600; line-height:1.4; margin-bottom:5px; }
+.news-item-meta { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+.news-item-actions { display:flex; gap:6px; clear:both; }
+.tag { padding:2px 8px; border-radius:5px; font-size:10px; font-weight:600; }
+.tag-cat { background:rgba(15,52,96,0.8); color:#7cc5ff; border:1px solid #1e4a7a; }
+.tag-breaking { background:rgba(233,69,96,0.2); color:var(--accent); border:1px solid var(--accent); }
+.tag-importance { background:rgba(46,204,113,0.15); color:var(--success); border:1px solid rgba(46,204,113,0.4); }
+.news-date { color:var(--text2); font-size:10px; }
 
-  /* Search */
-  .search-bar { display: flex; gap: 8px; margin-bottom: 14px; }
-  .search-input { flex: 1; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 14px; direction: rtl; outline: none; font-family: inherit; }
-  .search-input:focus { border-color: var(--accent); }
+/* ── SEARCH & TABS ── */
+.search-wrap { display:flex; gap:8px; margin-bottom:12px; }
+.search-input { flex:1; padding:9px 13px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-size:14px; direction:rtl; outline:none; font-family:inherit; }
+.search-input:focus { border-color:var(--accent); }
+.tabs-scroll { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.tabs-scroll::-webkit-scrollbar { display:none; }
+.tab-btn { padding:6px 14px; border-radius:20px; background:var(--surface2); color:var(--text2); cursor:pointer; font-size:12px; white-space:nowrap; border:1px solid var(--border); font-weight:600; font-family:inherit; flex-shrink:0; }
+.tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.section-title { font-size:14px; font-weight:700; }
 
-  /* Alert */
-  .alert { padding: 12px 16px; border-radius: var(--radius); margin-bottom: 12px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-  .alert-success { background: rgba(46,204,113,0.15); border: 1px solid var(--success); color: var(--success); }
-  .alert-error { background: rgba(231,76,60,0.15); border: 1px solid var(--danger); color: var(--danger); }
-  .alert-warning { background: rgba(243,156,18,0.15); border: 1px solid var(--warning); color: var(--warning); }
-  .alert-info { background: rgba(52,152,219,0.15); border: 1px solid var(--info); color: var(--info); }
+/* ── FILE BROWSER ── */
+.file-path-bar { display:flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:8px 12px; margin-bottom:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.path-seg { color:var(--info); cursor:pointer; font-size:12px; font-family:monospace; white-space:nowrap; }
+.path-seg:hover { text-decoration:underline; }
+.path-sep { color:var(--text2); font-size:12px; }
+.file-list-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:6px; cursor:pointer; transition:border-color 0.2s; }
+.file-list-item:hover, .file-list-item:active { border-color:var(--info); }
+.file-icon { font-size:20px; flex-shrink:0; }
+.file-info { flex:1; min-width:0; }
+.file-name { font-size:13px; font-weight:600; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:ltr; }
+.file-meta { font-size:10px; color:var(--text2); }
+.file-actions { display:flex; gap:5px; }
 
-  /* Loading */
-  .loading { text-align: center; padding: 40px; color: var(--text2); }
-  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── CODE EDITOR ── */
+.editor-overlay { display:none; position:fixed; inset:0; background:var(--bg); z-index:500; flex-direction:column; }
+.editor-overlay.open { display:flex; }
+.editor-topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.editor-file-path { flex:1; font-family:monospace; font-size:12px; color:var(--info); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:ltr; }
+.editor-topbar-actions { display:flex; gap:8px; flex-shrink:0; }
+.editor-container { flex:1; overflow:hidden; }
+.CodeMirror { height:100% !important; font-size:14px; font-family:'Fira Code','Courier New',monospace; line-height:1.6; }
+.editor-footer { background:var(--surface); border-top:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.editor-footer input { flex:1; padding:8px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-size:13px; outline:none; direction:rtl; }
+.editor-footer input:focus { border-color:var(--accent); }
+.editor-status { font-size:11px; color:var(--text2); }
 
-  /* Toggle */
-  .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .toggle-row:last-child { border-bottom: none; }
-  .toggle-label { font-size: 14px; }
-  .toggle { position: relative; width: 48px; height: 26px; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--surface2); border-radius: 26px; border: 1px solid var(--border); transition: 0.3s; }
-  .toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: var(--text2); border-radius: 50%; transition: 0.3s; }
-  input:checked + .toggle-slider { background: var(--success); border-color: var(--success); }
-  input:checked + .toggle-slider:before { transform: translateX(22px); background: white; }
+/* ── WORKFLOW ── */
+.workflow-run { background:var(--surface2); border-radius:var(--radius); padding:11px 13px; margin-bottom:6px; border-right:3px solid var(--border); border-top:1px solid var(--border); border-bottom:1px solid var(--border); border-left:1px solid var(--border); }
+.workflow-run.success { border-right-color:var(--success); }
+.workflow-run.failure { border-right-color:var(--danger); }
+.workflow-run.in_progress { border-right-color:var(--info); animation:pulseBorder 1.5s infinite; }
+.workflow-run.queued { border-right-color:var(--warn); }
+@keyframes pulseBorder { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.run-name { font-size:13px; font-weight:600; }
+.run-meta { font-size:11px; color:var(--text2); margin-top:3px; display:flex; gap:10px; flex-wrap:wrap; }
+.run-status { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.run-status.success { background:rgba(46,204,113,0.15); color:var(--success); }
+.run-status.failure { background:rgba(231,76,60,0.15); color:var(--danger); }
+.run-status.in_progress { background:rgba(88,166,255,0.15); color:var(--info); }
+.run-status.queued { background:rgba(243,156,18,0.15); color:var(--warn); }
+.run-status.cancelled { background:rgba(139,148,158,0.15); color:var(--text2); }
+.job-step { padding:6px 10px; font-size:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.job-step:last-child { border-bottom:none; }
 
-  /* Section header */
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .section-title { font-size: 16px; font-weight: 700; }
-  .empty-state { text-align: center; padding: 50px 20px; color: var(--text2); }
-  .empty-state .empty-icon { font-size: 50px; margin-bottom: 15px; }
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
-  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--surface2); border-radius: 20px; font-size: 12px; border: 1px solid var(--border); }
-  .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .page { display: none; }
-  .page.active { display: block; }
-  .fab { position: fixed; bottom: 80px; left: 16px; width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #c0392b); color: white; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(233,69,96,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
-  .row { display: flex; gap: 10px; }
-  .row .form-group { flex: 1; }
-  .full-w { width: 100%; }
-  .text-center { text-align: center; }
-  .mt-10 { margin-top: 10px; }
-  .mb-10 { margin-bottom: 10px; }
-  .flex-between { display: flex; justify-content: space-between; align-items: center; }
-  .img-preview { width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
-  .category-color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
-  .color-option { width: 100%; aspect-ratio: 1; border-radius: 8px; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
-  .color-option.selected { border-color: white; transform: scale(1.1); }
+/* ── MODAL ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal-sheet { background:var(--surface); border-radius:20px 20px 0 0; padding:20px; width:100%; max-height:92vh; overflow-y:auto; border-top:2px solid var(--accent); }
+.modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
+.modal-title { font-size:16px; font-weight:700; margin-bottom:18px; color:var(--accent); display:flex; align-items:center; gap:8px; }
+.modal-actions { display:flex; gap:8px; margin-top:18px; }
+.modal-actions .btn { flex:1; justify-content:center; }
+
+/* ── TOGGLE ── */
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+.toggle-row:last-child { border-bottom:none; }
+.toggle-label { font-size:13px; }
+.toggle { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--surface2); border:1px solid var(--border); border-radius:24px; transition:0.3s; }
+.toggle-slider::before { content:''; position:absolute; width:18px; height:18px; right:2px; top:2px; background:var(--text2); border-radius:50%; transition:0.3s; }
+.toggle input:checked + .toggle-slider { background:var(--accent); border-color:var(--accent); }
+.toggle input:checked + .toggle-slider::before { right:22px; background:#fff; }
+
+/* ── EMPTY / LOADING ── */
+.empty-state { text-align:center; padding:40px 20px; color:var(--text2); }
+.empty-icon { font-size:48px; margin-bottom:12px; }
+.empty-state p { font-size:13px; }
+.loading { display:flex; align-items:center; justify-content:center; gap:10px; padding:30px; color:var(--text2); font-size:13px; }
+.spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── TOAST ── */
+#toast { position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-80px); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 18px; font-size:13px; z-index:999; transition:transform 0.3s; box-shadow:var(--shadow); max-width:90vw; text-align:center; white-space:nowrap; }
+#toast.show { transform:translateX(-50%) translateY(0); }
+#toast.success { border-color:var(--success); color:var(--success); }
+#toast.error { border-color:var(--danger); color:var(--danger); }
+#toast.info { border-color:var(--info); color:var(--info); }
+
+/* ── MISC ── */
+.divider { height:1px; background:var(--border); margin:12px 0; }
+.badge { background:var(--accent); color:#fff; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+.chip { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; font-size:11px; }
+.img-preview { width:100%; max-height:140px; object-fit:cover; border-radius:var(--radius); margin-top:8px; display:none; }
+.color-grid { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.color-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all 0.2s; }
+.color-dot.selected { border-color:#fff; transform:scale(1.2); }
+pre.log-output { background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius); padding:10px; font-size:11px; font-family:monospace; overflow-x:auto; white-space:pre-wrap; color:var(--text2); max-height:300px; overflow-y:auto; direction:ltr; text-align:left; }
+.action-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
 </style>
 </head>
 <body>
 
-<!-- Login Screen -->
+<!-- ══════════ LOGIN ══════════ -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-logo">
-      <div class="logo-icon">🌐</div>
-      <h1>لوحة تحكم بوابة الأنباء</h1>
-      <p>تحكم كامل في موقعك الإخباري</p>
+      <div class="icon">🌐</div>
+      <h1>لوحة التحكم</h1>
+      <p>بوابة الأنباء العالمية</p>
     </div>
     <div id="loginAlert"></div>
     <div class="form-group">
-      <label>GitHub Token 🔑</label>
+      <label>GitHub Token (repo + workflow)</label>
       <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      <small>من GitHub → Settings → Developer settings → Personal access tokens (يحتاج صلاحية repo)</small>
+      <small>من GitHub: Settings → Developer settings → Personal access tokens</small>
     </div>
     <div class="form-group">
-      <label>اسم المستخدم (GitHub Username)</label>
-      <input type="text" id="ghOwner" placeholder="your-username">
+      <label>اسم المستخدم (Owner)</label>
+      <input type="text" id="ghOwner" placeholder="worldnewsportal">
     </div>
     <div class="form-group">
-      <label>اسم المستودع (Repository Name)</label>
-      <input type="text" id="ghRepo" placeholder="world-news-portal">
+      <label>اسم الـ Repository</label>
+      <input type="text" id="ghRepo" placeholder="worldnewsportal.github.io">
     </div>
     <div class="form-group">
-      <label>الفرع (Branch)</label>
+      <label>الـ Branch</label>
       <input type="text" id="ghBranch" placeholder="main" value="main">
     </div>
-    <button class="btn btn-primary" onclick="doLogin()">🚀 دخول للوحة التحكم</button>
-    <div style="margin-top:12px; text-align:center;">
-      <small style="color:var(--text2)">بياناتك محفوظة محلياً على الجهاز فقط</small>
-    </div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">🔓 تسجيل الدخول</button>
   </div>
 </div>
 
-<!-- Main App -->
+<!-- ══════════ APP ══════════ -->
 <div id="app">
-  <!-- Top Bar -->
   <div class="top-bar">
-    <div>
-      <div style="font-size:13px; color:var(--text2);" id="repoName">بوابة الأنباء العالمية</div>
-      <div id="topBarTitle" style="font-size:16px; font-weight:700;">الرئيسية</div>
+    <div class="top-bar-left">
+      <span style="font-size:20px">🌐</span>
+      <div>
+        <div style="font-size:13px; font-weight:700;">لوحة التحكم</div>
+        <div class="repo-badge" id="repoLabel">...</div>
+      </div>
     </div>
-    <div class="top-bar-actions">
-      <button class="btn btn-sm btn-secondary" onclick="refreshAll()" id="refreshBtn">🔄</button>
-      <button class="btn btn-sm btn-danger" onclick="doLogout()">خروج</button>
+    <div class="top-bar-right">
+      <button class="btn btn-ghost btn-sm" onclick="refreshAll()" id="refreshBtn">🔄</button>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">خروج</button>
     </div>
   </div>
 
-  <!-- Global Alert -->
-  <div id="globalAlert" style="padding: 0 16px; padding-top: 8px; display:none;"></div>
-
-  <!-- Content -->
-  <div class="content">
-
-    <!-- Dashboard Page -->
-    <div id="page-dashboard" class="page active">
-      <div class="stat-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-value" id="totalNews">-</div><div class="stat-label">📰 إجمالي الأخبار</div></div>
-        <div class="stat-card"><div class="stat-value" id="urgentNews">-</div><div class="stat-label">🚨 عاجل</div></div>
-        <div class="stat-card"><div class="stat-value" id="todayNews">-</div><div class="stat-label">📅 أخبار اليوم</div></div>
-        <div class="stat-card"><div class="stat-value" id="categoriesCount">-</div><div class="stat-label">📂 التصنيفات</div></div>
+  <div class="content-area">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-home">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-value" id="s-total">—</div><div class="stat-label">إجمالي الأخبار</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-breaking">—</div><div class="stat-label">أخبار عاجلة</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-today">—</div><div class="stat-label">أخبار اليوم</div></div>
+        <div class="stat-card"><div class="stat-value" id="s-cats">—</div><div class="stat-label">التصنيفات</div></div>
       </div>
       <div class="card">
-        <div class="card-title">⚡ إجراءات سريعة</div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <button class="btn btn-primary" onclick="navigateTo('news'); openAddNews()">✏️ إضافة خبر جديد</button>
-          <button class="btn btn-info" onclick="navigateTo('bot')">🤖 تشغيل بوت الأخبار</button>
-          <button class="btn btn-warning" onclick="navigateTo('site')">⚙️ إعدادات الموقع</button>
-          <button class="btn btn-secondary" onclick="navigateTo('triggers')">🔧 إدارة GitHub Actions</button>
+        <div class="card-header"><span class="card-title">⚡ إجراءات سريعة</span></div>
+        <div class="action-row">
+          <button class="btn btn-primary btn-sm" onclick="openNewsModal()">✏️ خبر جديد</button>
+          <button class="btn btn-info btn-sm" onclick="triggerWorkflow('news_bot.yml')">🤖 تشغيل البوت</button>
+          <button class="btn btn-ghost btn-sm" onclick="triggerWorkflow('build-apk.yml')">📱 بناء APK</button>
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('files')">📂 الملفات</button>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📰 آخر الأخبار المضافة</div>
-        <div id="recentNewsList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+        <div class="card-header"><span class="card-title">📰 آخر الأخبار</span></div>
+        <div id="dash-recent"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">⚙️ آخر Runs</span><button class="btn btn-ghost btn-sm" onclick="navigateTo('actions')">عرض الكل</button></div>
+        <div id="dash-runs"><div class="loading"><div class="spinner"></div></div></div>
       </div>
     </div>
 
-    <!-- News Management Page -->
-    <div id="page-news" class="page">
-      <div class="search-bar">
-        <input class="search-input" type="text" id="newsSearch" placeholder="🔍 ابحث في الأخبار..." oninput="filterNews()">
-        <button class="btn btn-sm btn-secondary" onclick="filterNews()">بحث</button>
-      </div>
-      <div class="tabs" id="categoryTabs">
-        <button class="tab active" onclick="setNewsFilter('all', this)">الكل</button>
-        <button class="tab" onclick="setNewsFilter('عاجل', this)">🚨 عاجل</button>
-      </div>
+    <!-- NEWS -->
+    <div class="page" id="page-news">
       <div class="section-header">
-        <span class="section-title" id="newsCountLabel">الأخبار</span>
-        <button class="btn btn-sm btn-primary" onclick="openAddNews()">+ إضافة</button>
+        <span class="section-title">📰 الأخبار</span>
+        <button class="btn btn-primary btn-sm" onclick="openNewsModal()">✏️ إضافة</button>
       </div>
+      <div class="search-wrap">
+        <input class="search-input" id="newsSearch" placeholder="🔍 بحث..." oninput="renderNews()">
+      </div>
+      <div class="tabs-scroll" id="newsTabs"></div>
       <div id="newsList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
     </div>
 
-    <!-- Categories Page -->
-    <div id="page-categories" class="page">
+    <!-- FILES -->
+    <div class="page" id="page-files">
       <div class="section-header">
-        <span class="section-title">📂 التصنيفات</span>
-        <button class="btn btn-sm btn-primary" onclick="openAddCategory()">+ إضافة</button>
-      </div>
-      <div id="categoriesList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
-    </div>
-
-    <!-- Bot / GitHub Actions Page -->
-    <div id="page-bot" class="page">
-      <div class="card">
-        <div class="card-title">🤖 تشغيل بوت الأخبار يدوياً</div>
-        <p style="color:var(--text2); font-size:13px; margin-bottom:14px;">سيقوم البوت بجلب الأخبار من المصادر المختلفة وإضافتها تلقائياً</p>
-        <button class="btn btn-primary" onclick="triggerWorkflow('news_bot.yml')">▶️ تشغيل البوت الآن</button>
-      </div>
-      <div class="card">
-        <div class="card-title">📦 بناء APK جديد</div>
-        <p style="color:var(--text2); font-size:13px; margin-bottom:14px;">سيتم بناء نسخة جديدة من تطبيق الأندرويد</p>
-        <button class="btn btn-info" onclick="triggerWorkflow('build-apk.yml')">🔨 بناء APK</button>
-      </div>
-      <div class="card">
-        <div class="card-title">📋 سجل تشغيل GitHub Actions</div>
-        <div id="workflowRunsList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
-      </div>
-    </div>
-
-    <!-- GitHub Actions Manager Page -->
-    <div id="page-triggers" class="page">
-      <div class="card">
-        <div class="card-title">🔧 إدارة Workflows</div>
-        <div id="workflowsList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">📁 إدارة ملفات الموقع</div>
-        <p style="color:var(--text2); font-size:13px; margin-bottom:14px;">عرض وتعديل الملفات مباشرة في المستودع</p>
-        <div id="filesList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
-      </div>
-    </div>
-
-    <!-- Site Settings Page -->
-    <div id="page-site" class="page">
-      <div class="card">
-        <div class="card-title">⚙️ إعدادات الموقع العامة</div>
-        <div id="siteSettingsForm">
-          <div class="loading"><div class="spinner"></div>جاري التحميل...</div>
+        <span class="section-title">📂 الملفات</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-success btn-sm" onclick="createNewFile()">➕ ملف جديد</button>
+          <button class="btn btn-ghost btn-sm" onclick="uploadFile()">⬆️ رفع</button>
         </div>
       </div>
+      <div class="file-path-bar" id="pathBar">
+        <span class="path-seg" onclick="navigateDir('')">🏠 root</span>
+      </div>
+      <div id="filesList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="page" id="page-actions">
+      <div class="section-header">
+        <span class="section-title">⚙️ GitHub Actions</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadWorkflows()">🔄</button>
+      </div>
+      <div class="tabs-scroll" id="actionsTabs">
+        <button class="tab-btn active" onclick="switchActionsTab('runs',this)">سجل الـ Runs</button>
+        <button class="tab-btn" onclick="switchActionsTab('workflows',this)">الـ Workflows</button>
+      </div>
+      <div id="actions-runs">
+        <div id="runsList"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+      <div id="actions-workflows" style="display:none;">
+        <div id="workflowsList"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- BOT -->
+    <div class="page" id="page-bot">
       <div class="card">
-        <div class="card-title">📰 إعدادات مصادر RSS</div>
-        <div id="rssSourcesList"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
-        <button class="btn btn-primary mt-10" onclick="openAddRss()">+ إضافة مصدر RSS</button>
+        <div class="card-title">🤖 تشغيل بوت الأخبار</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">يجمع الأخبار من المصادر ويحدّث news.json تلقائياً</p>
+        <button class="btn btn-primary btn-block" onclick="triggerWorkflow('news_bot.yml')">▶️ تشغيل الآن</button>
       </div>
       <div class="card">
-        <div class="card-title">🗑️ إدارة الأخبار القديمة</div>
-        <div class="form-group">
-          <label>احذف الأخبار الأقدم من (أيام)</label>
-          <input type="number" id="deleteOlderThan" placeholder="30" min="1">
+        <div class="card-title">📱 بناء APK جديد</div>
+        <div class="form-group" style="margin-top:10px;">
+          <label>رقم الإصدار</label>
+          <input type="text" id="apkVersion" value="1.0.0" style="font-family:monospace;direction:ltr;">
         </div>
-        <button class="btn btn-danger" onclick="deleteOldNews()">🗑️ حذف الأخبار القديمة</button>
+        <button class="btn btn-info btn-block" onclick="triggerBuildAPK()">🔨 بناء APK</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 إضافة خبر يدوي</div>
+        <button class="btn btn-ghost btn-block" onclick="navigateTo('news');openNewsModal()">✏️ فتح نموذج الخبر</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="card">
+        <div class="card-title">⚙️ معلومات الاتصال</div>
+        <div style="margin-top:10px;">
+          <div class="chip" style="margin-bottom:6px;width:100%;direction:ltr;" id="cfg-repo"></div>
+          <div class="chip" style="width:100%;direction:ltr;" id="cfg-branch"></div>
+        </div>
         <div class="divider"></div>
-        <button class="btn btn-danger" onclick="confirmDeleteAllNews()">⚠️ حذف جميع الأخبار</button>
+        <button class="btn btn-ghost btn-block" onclick="openChangeCredentials()">🔑 تغيير بيانات الدخول</button>
+        <button class="btn btn-danger btn-block" style="margin-top:8px;" onclick="doLogout()">🚪 تسجيل الخروج</button>
       </div>
       <div class="card">
-        <div class="card-title">🔐 تغيير بيانات الدخول</div>
-        <button class="btn btn-secondary" onclick="openChangeCredentials()">تغيير الإعدادات</button>
+        <div class="card-title">🌐 الموقع</div>
+        <button class="btn btn-info btn-block" onclick="openWebsite()">🔗 فتح الموقع</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📦 GitHub Releases</div>
+        <button class="btn btn-ghost btn-block" onclick="openReleases()">📦 عرض الـ Releases</button>
       </div>
     </div>
+  </div>
 
-  </div><!-- end content -->
-
-  <!-- Bottom Nav -->
-  <nav class="nav-bar">
-    <button class="nav-item active" onclick="navigateTo('dashboard')" id="nav-dashboard">
-      <span>🏠</span><span>الرئيسية</span>
+  <div class="nav-bar">
+    <button class="nav-item active" id="nav-home" onclick="navigateTo('home')">
+      <span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span>
     </button>
-    <button class="nav-item" onclick="navigateTo('news')" id="nav-news">
-      <span>📰</span><span>الأخبار</span>
+    <button class="nav-item" id="nav-news" onclick="navigateTo('news')">
+      <span class="nav-icon">📰</span><span class="nav-label">الأخبار</span>
     </button>
-    <button class="nav-item" onclick="navigateTo('categories')" id="nav-categories">
-      <span>📂</span><span>التصنيفات</span>
+    <button class="nav-item" id="nav-files" onclick="navigateTo('files')">
+      <span class="nav-icon">📂</span><span class="nav-label">الملفات</span>
     </button>
-    <button class="nav-item" onclick="navigateTo('bot')" id="nav-bot">
-      <span>🤖</span><span>البوت</span>
+    <button class="nav-item" id="nav-actions" onclick="navigateTo('actions')">
+      <span class="nav-icon">⚙️</span><span class="nav-label">Actions</span>
     </button>
-    <button class="nav-item" onclick="navigateTo('site')" id="nav-site">
-      <span>⚙️</span><span>الإعدادات</span>
+    <button class="nav-item" id="nav-bot" onclick="navigateTo('bot')">
+      <span class="nav-icon">🤖</span><span class="nav-label">بوت</span>
     </button>
-  </nav>
+    <button class="nav-item" id="nav-settings" onclick="navigateTo('settings')">
+      <span class="nav-icon">⚙️</span><span class="nav-label">إعدادات</span>
+    </button>
+  </div>
 </div>
 
-<!-- Add/Edit News Modal -->
+<!-- ══════════ CODE EDITOR OVERLAY ══════════ -->
+<div class="editor-overlay" id="editorOverlay">
+  <div class="editor-topbar">
+    <button class="btn btn-ghost btn-sm" onclick="closeEditor()">✕ إغلاق</button>
+    <div class="editor-file-path" id="editorPath">/</div>
+    <div class="editor-topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="editorFormat()">⚡ Format</button>
+      <button class="btn btn-ghost btn-sm" onclick="editorSearch()">🔍 بحث</button>
+      <button class="btn btn-success btn-sm" onclick="saveEditorFile()" id="editorSaveBtn">💾 حفظ</button>
+    </div>
+  </div>
+  <div class="editor-container" id="editorContainer"></div>
+  <div class="editor-footer">
+    <input type="text" id="commitMsg" placeholder="رسالة الـ commit..." value="تحديث الملف">
+    <span class="editor-status" id="editorStatus"></span>
+  </div>
+</div>
+
+<!-- ══════════ NEWS MODAL ══════════ -->
 <div class="modal-overlay" id="newsModal">
-  <div class="modal">
-    <div class="modal-title" id="newsModalTitle">✏️ إضافة خبر جديد</div>
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="newsModalTitle">✏️ إضافة خبر</div>
     <div id="newsModalAlert"></div>
     <div class="form-group">
-      <label>العنوان الرئيسي *</label>
-      <input type="text" id="newsTitle" placeholder="عنوان الخبر">
+      <label>العنوان *</label>
+      <textarea id="newsTitle" rows="2" placeholder="عنوان الخبر بالكامل..."></textarea>
     </div>
     <div class="form-group">
-      <label>الملخص *</label>
-      <textarea id="newsSummary" rows="3" placeholder="ملخص مختصر للخبر"></textarea>
+      <label>ملخص</label>
+      <textarea id="newsSummary" rows="2" placeholder="ملخص مختصر..."></textarea>
     </div>
     <div class="form-group">
-      <label>المحتوى الكامل</label>
-      <textarea id="newsContent" rows="5" placeholder="المحتوى التفصيلي للخبر"></textarea>
-    </div>
-    <div class="row">
-      <div class="form-group">
-        <label>التصنيف *</label>
-        <select id="newsCategory">
-          <option value="">-- اختر --</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>المصدر</label>
-        <input type="text" id="newsSource" placeholder="Al Jazeera">
-      </div>
+      <label>المحتوى التفصيلي</label>
+      <textarea id="newsBody" rows="4" placeholder="محتوى الخبر التفصيلي..."></textarea>
     </div>
     <div class="form-group">
-      <label>رابط المصدر</label>
-      <input type="url" id="newsUrl" placeholder="https://...">
+      <label>التصنيف</label>
+      <select id="newsCategory">
+        <option>أخبار عامة</option><option>سياسة</option><option>اقتصاد</option>
+        <option>رياضة</option><option>تقنية</option><option>صحة</option>
+        <option>علوم</option><option>ثقافة</option><option>عاجل</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>رابط الخبر الأصلي</label>
+      <input type="url" id="newsLink" placeholder="https://">
     </div>
     <div class="form-group">
       <label>رابط الصورة</label>
-      <input type="url" id="newsImage" placeholder="https://..." oninput="previewImg()">
-      <img id="imgPreview" class="img-preview">
-    </div>
-    <div class="row">
-      <div class="form-group">
-        <label>الكاتب</label>
-        <input type="text" id="newsAuthor" placeholder="اسم الكاتب">
-      </div>
-      <div class="form-group">
-        <label>التاريخ</label>
-        <input type="datetime-local" id="newsDate">
-      </div>
+      <input type="url" id="newsImage" placeholder="https://" oninput="previewNewsImg()">
+      <img id="newsImgPreview" class="img-preview">
     </div>
     <div class="form-group">
-      <label>الكلمات المفتاحية (مفصولة بفاصلة)</label>
-      <input type="text" id="newsTags" placeholder="سياسة, أخبار, عالمية">
+      <label>مصدر الخبر</label>
+      <input type="text" id="newsSource" placeholder="Al Jazeera, BBC, Reuters...">
+    </div>
+    <div class="form-group">
+      <label>الأهمية (1-10)</label>
+      <input type="number" id="newsImportance" value="5" min="1" max="10">
     </div>
     <div class="toggle-row">
-      <span class="toggle-label">🚨 خبر عاجل</span>
-      <label class="toggle"><input type="checkbox" id="newsUrgent"><span class="toggle-slider"></span></label>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">📌 تثبيت الخبر</span>
-      <label class="toggle"><input type="checkbox" id="newsPinned"><span class="toggle-slider"></span></label>
+      <span class="toggle-label">🔴 خبر عاجل</span>
+      <label class="toggle"><input type="checkbox" id="newsBreaking"><span class="toggle-slider"></span></label>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('newsModal')">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveNews()" id="saveNewsBtn">💾 حفظ</button>
+      <button class="btn btn-ghost" onclick="closeModal('newsModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveNews()" id="newsSaveBtn">💾 حفظ</button>
     </div>
   </div>
 </div>
 
-<!-- Add/Edit Category Modal -->
-<div class="modal-overlay" id="categoryModal">
-  <div class="modal">
-    <div class="modal-title" id="catModalTitle">📂 إضافة تصنيف جديد</div>
-    <div id="catModalAlert"></div>
-    <div class="form-group">
-      <label>اسم التصنيف *</label>
-      <input type="text" id="catName" placeholder="مثال: رياضة">
-    </div>
-    <div class="form-group">
-      <label>الإيموجي / الأيقونة</label>
-      <input type="text" id="catIcon" placeholder="⚽">
-    </div>
-    <div class="form-group">
-      <label>اللون</label>
-      <div class="category-color-grid" id="colorGrid"></div>
-      <input type="text" id="catColor" placeholder="#3498db" style="margin-top:10px;">
-    </div>
-    <div class="form-group">
-      <label>الترتيب (رقم)</label>
-      <input type="number" id="catOrder" placeholder="1" min="0">
-    </div>
+<!-- ══════════ DELETE CONFIRM ══════════ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🗑️ تأكيد الحذف</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;" id="deleteMsg">هل أنت متأكد؟</p>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('categoryModal')">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveCategory()">💾 حفظ</button>
+      <button class="btn btn-ghost" onclick="closeModal('deleteModal')">إلغاء</button>
+      <button class="btn btn-danger" id="deleteConfirmBtn">🗑️ حذف</button>
     </div>
   </div>
 </div>
 
-<!-- Add RSS Modal -->
-<div class="modal-overlay" id="rssModal">
-  <div class="modal">
-    <div class="modal-title">📡 إضافة مصدر RSS</div>
-    <div id="rssModalAlert"></div>
-    <div class="form-group">
-      <label>اسم المصدر *</label>
-      <input type="text" id="rssName" placeholder="مثال: الجزيرة">
-    </div>
-    <div class="form-group">
-      <label>رابط RSS *</label>
-      <input type="url" id="rssUrl" placeholder="https://www.aljazeera.net/rss">
-    </div>
-    <div class="form-group">
-      <label>التصنيف الافتراضي</label>
-      <select id="rssCategory">
-        <option value="">-- بدون تصنيف --</option>
-      </select>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">تفعيل هذا المصدر</span>
-      <label class="toggle"><input type="checkbox" id="rssActive" checked><span class="toggle-slider"></span></label>
-    </div>
+<!-- ══════════ RUN DETAILS ══════════ -->
+<div class="modal-overlay" id="runModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="runModalTitle">تفاصيل الـ Run</div>
+    <div id="runModalContent"></div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('rssModal')">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveRss()">💾 حفظ</button>
+      <button class="btn btn-ghost btn-block" onclick="closeModal('runModal')">إغلاق</button>
     </div>
   </div>
 </div>
 
-<!-- File Viewer Modal -->
-<div class="modal-overlay" id="fileModal">
-  <div class="modal">
-    <div class="modal-title" id="fileModalTitle">📄 تعديل الملف</div>
-    <div id="fileModalAlert"></div>
+<!-- ══════════ NEW FILE MODAL ══════════ -->
+<div class="modal-overlay" id="newFileModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ ملف جديد</div>
     <div class="form-group">
-      <label>المحتوى</label>
-      <textarea id="fileContent" rows="15" style="direction:ltr; font-family:monospace; font-size:12px;"></textarea>
+      <label>اسم الملف (مع الامتداد)</label>
+      <input type="text" id="newFileName" placeholder="example.html" style="direction:ltr;">
     </div>
     <div class="form-group">
-      <label>رسالة الحفظ (Commit Message)</label>
-      <input type="text" id="fileCommitMsg" placeholder="تعديل الملف">
+      <label>المسار (اتركه فارغاً للـ root)</label>
+      <input type="text" id="newFilePath" placeholder="folder/subfolder" style="direction:ltr;" id="newFileDirPath">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('fileModal')">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveFile()">💾 حفظ التغييرات</button>
+      <button class="btn btn-ghost" onclick="closeModal('newFileModal')">إلغاء</button>
+      <button class="btn btn-success" onclick="confirmCreateFile()">➕ إنشاء وفتح</button>
     </div>
   </div>
 </div>
 
-<!-- Confirm Delete Modal -->
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal">
-    <div class="modal-title" id="confirmTitle">⚠️ تأكيد الحذف</div>
-    <p id="confirmMessage" style="color:var(--text2); margin-bottom:20px;"></p>
+<!-- ══════════ UPLOAD FILE MODAL ══════════ -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⬆️ رفع ملف</div>
+    <div class="form-group">
+      <label>اختر ملفاً</label>
+      <input type="file" id="uploadInput" style="color:var(--text);direction:ltr;" onchange="onUploadSelected()">
+    </div>
+    <div id="uploadPreview" style="font-size:12px;color:var(--text2);margin-bottom:10px;"></div>
+    <div class="form-group">
+      <label>مسار الحفظ</label>
+      <input type="text" id="uploadPath" style="direction:ltr;" placeholder="folder/filename.ext">
+    </div>
+    <div class="form-group">
+      <label>رسالة الـ Commit</label>
+      <input type="text" id="uploadCommitMsg" placeholder="إضافة ملف جديد">
+    </div>
+    <div id="uploadAlert"></div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">إلغاء</button>
-      <button class="btn btn-danger" id="confirmBtn">حذف</button>
+      <button class="btn btn-ghost" onclick="closeModal('uploadModal')">إلغاء</button>
+      <button class="btn btn-success" onclick="confirmUpload()" id="uploadBtn">⬆️ رفع</button>
     </div>
   </div>
 </div>
+
+<div id="toast"></div>
 
 <script>
-// ============================================================
-// CONFIG & STATE
-// ============================================================
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
 let cfg = {};
 let allNews = [];
 let categories = [];
 let currentNewsFilter = 'all';
-let editingNewsIndex = -1;
-let editingCatIndex = -1;
-let currentFilePath = '';
-let currentFileSha = '';
-let rssSources = [];
+let currentDir = '';
+let currentEditorPath = '';
+let currentEditorSha = '';
+let cmEditor = null;
+let deleteFn = null;
 
-const COLORS = ['#e94560','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e74c3c','#0f3460','#16213e'];
+const COLORS = ['#e94560','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22'];
 
-// ============================================================
+// ════════════════════════════════════════
 // INIT
-// ============================================================
+// ════════════════════════════════════════
 window.onload = () => {
   const saved = localStorage.getItem('wn_cfg');
   if (saved) {
-    cfg = JSON.parse(saved);
-    startApp();
+    try { cfg = JSON.parse(saved); startApp(); } catch(e) {}
   }
-  buildColorGrid();
 };
 
-function buildColorGrid() {
-  const grid = document.getElementById('colorGrid');
-  COLORS.forEach(c => {
-    const d = document.createElement('div');
-    d.className = 'color-option';
-    d.style.background = c;
-    d.onclick = () => {
-      document.querySelectorAll('.color-option').forEach(x => x.classList.remove('selected'));
-      d.classList.add('selected');
-      document.getElementById('catColor').value = c;
-    };
-    grid.appendChild(d);
-  });
-}
-
-// ============================================================
+// ════════════════════════════════════════
 // AUTH
-// ============================================================
+// ════════════════════════════════════════
 async function doLogin() {
-  const token = document.getElementById('ghToken').value.trim();
-  const owner = document.getElementById('ghOwner').value.trim();
-  const repo = document.getElementById('ghRepo').value.trim();
-  const branch = document.getElementById('ghBranch').value.trim() || 'main';
-  if (!token || !owner || !repo) { showLoginAlert('يرجى ملء جميع الحقول المطلوبة', 'error'); return; }
-  showLoginAlert('جاري التحقق...', 'info');
+  const token  = v('ghToken');
+  const owner  = v('ghOwner');
+  const repo   = v('ghRepo');
+  const branch = v('ghBranch') || 'main';
+  if (!token || !owner || !repo) { loginAlert('يرجى ملء جميع الحقول', 'error'); return; }
+  loginAlert('جاري التحقق...', 'info');
   try {
-    const res = await ghFetch(`https://api.github.com/repos/${owner}/${repo}`, token);
-    if (!res.ok) { showLoginAlert('فشل التحقق: تأكد من صحة البيانات والصلاحيات', 'error'); return; }
+    const r = await ghFetch(`https://api.github.com/repos/${owner}/${repo}`);
+    if (!r.ok) { loginAlert('فشل: تأكد من صحة البيانات والصلاحيات', 'error'); return; }
     cfg = { token, owner, repo, branch };
     localStorage.setItem('wn_cfg', JSON.stringify(cfg));
     startApp();
-  } catch(e) { showLoginAlert('خطأ في الاتصال: ' + e.message, 'error'); }
+  } catch(e) { loginAlert('خطأ: ' + e.message, 'error'); }
 }
 
-function showLoginAlert(msg, type) {
+function loginAlert(msg, type) {
   document.getElementById('loginAlert').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
 }
 
 function doLogout() {
   localStorage.removeItem('wn_cfg');
-  cfg = {}; allNews = []; categories = [];
+  cfg = {}; allNews = [];
   document.getElementById('app').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
 }
@@ -565,592 +605,763 @@ function doLogout() {
 function openChangeCredentials() {
   document.getElementById('ghToken').value = cfg.token || '';
   document.getElementById('ghOwner').value = cfg.owner || '';
-  document.getElementById('ghRepo').value = cfg.repo || '';
+  document.getElementById('ghRepo').value  = cfg.repo  || '';
   document.getElementById('ghBranch').value = cfg.branch || 'main';
   document.getElementById('app').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
 }
 
-// ============================================================
-// APP START
-// ============================================================
 function startApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-  document.getElementById('repoName').textContent = `${cfg.owner}/${cfg.repo}`;
+  document.getElementById('repoLabel').textContent = `${cfg.owner}/${cfg.repo}`;
+  document.getElementById('cfg-repo').textContent  = `${cfg.owner}/${cfg.repo}`;
+  document.getElementById('cfg-branch').textContent = `branch: ${cfg.branch}`;
   refreshAll();
 }
 
-async function refreshAll() {
-  document.getElementById('refreshBtn').textContent = '⏳';
-  await loadNews();
-  await loadWorkflowRuns();
-  await loadWorkflows();
-  await loadRepoFiles();
-  await loadRssSources();
-  renderDashboard();
-  renderNews();
-  renderCategories();
-  document.getElementById('refreshBtn').textContent = '🔄';
-}
-
-// ============================================================
-// GITHUB API HELPERS
-// ============================================================
-function ghFetch(url, token, options = {}) {
+// ════════════════════════════════════════
+// GITHUB API
+// ════════════════════════════════════════
+function ghFetch(url, opts = {}) {
   return fetch(url, {
-    ...options,
+    ...opts,
     headers: {
-      'Authorization': `token ${token || cfg.token}`,
+      'Authorization': `token ${cfg.token}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
-      ...(options.headers || {})
+      ...(opts.headers || {})
     }
   });
 }
 
-async function getFile(path) {
-  const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${cfg.branch}`);
-  if (!res.ok) return null;
-  const data = await res.json();
-  const content = atob(data.content.replace(/\n/g,''));
-  return { content, sha: data.sha };
+async function apiGet(path) {
+  const r = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}${path}`);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
 }
 
-async function putFile(path, content, sha, message) {
+async function getFile(filePath) {
+  try {
+    const r = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${filePath}?ref=${cfg.branch}`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (Array.isArray(d)) return null;
+    const content = decodeBase64(d.content.replace(/\n/g,''));
+    return { content, sha: d.sha, size: d.size };
+  } catch(e) { return null; }
+}
+
+async function putFile(filePath, content, sha, message) {
   const body = {
-    message: message || `تحديث ${path}`,
-    content: btoa(unescape(encodeURIComponent(content))),
+    message: message || `تحديث ${filePath}`,
+    content: encodeBase64(content),
     branch: cfg.branch
   };
   if (sha) body.sha = sha;
-  const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`, cfg.token, {
-    method: 'PUT',
-    body: JSON.stringify(body)
+  return ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${filePath}`, {
+    method: 'PUT', body: JSON.stringify(body)
   });
-  return res;
 }
 
-// ============================================================
-// NEWS MANAGEMENT
-// ============================================================
+async function deleteFile(filePath, sha, message) {
+  const body = { message: message || `حذف ${filePath}`, sha, branch: cfg.branch };
+  return ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${filePath}`, {
+    method: 'DELETE', body: JSON.stringify(body)
+  });
+}
+
+async function listDir(dirPath) {
+  const path = dirPath ? dirPath : '';
+  const r = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${cfg.branch}`);
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+function decodeBase64(b64) {
+  try { return decodeURIComponent(escape(atob(b64))); } catch(e) { return atob(b64); }
+}
+function encodeBase64(str) {
+  try { return btoa(unescape(encodeURIComponent(str))); } catch(e) { return btoa(str); }
+}
+
+// ════════════════════════════════════════
+// REFRESH
+// ════════════════════════════════════════
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  try {
+    await Promise.all([loadNews(), loadRuns(), loadWorkflows()]);
+    renderDashboard();
+    renderNews();
+    renderDashRuns();
+  } catch(e) {}
+  btn.textContent = '🔄';
+  btn.disabled = false;
+}
+
+// ════════════════════════════════════════
+// NEWS
+// ════════════════════════════════════════
 async function loadNews() {
   try {
     const f = await getFile('news.json');
-    if (!f) { allNews = []; categories = extractCategories([]); return; }
+    if (!f) { allNews = []; return; }
     const parsed = JSON.parse(f.content);
-    allNews = Array.isArray(parsed) ? parsed : (parsed.articles || parsed.news || []);
-    allNews = allNews.map((n, i) => ({ ...n, _idx: i }));
-    categories = extractCategories(allNews);
-    return f.sha;
-  } catch(e) { allNews = []; showGlobalAlert('خطأ في تحميل الأخبار: ' + e.message, 'error'); }
+    const arr = Array.isArray(parsed) ? parsed : (parsed.articles || parsed.news || []);
+    allNews = arr.map((n, i) => ({ ...n, _idx: i }));
+    categories = [...new Set(allNews.map(n => n.category).filter(Boolean))];
+  } catch(e) { allNews = []; }
 }
 
-function extractCategories(news) {
-  const cats = new Set();
-  news.forEach(n => { if (n.category) cats.add(n.category); });
-  return Array.from(cats);
-}
-
-async function saveNewsJson(message) {
+async function saveNewsJson(msg) {
   const f = await getFile('news.json');
-  const clean = allNews.map(n => { const x = {...n}; delete x._idx; return x; });
-  const content = JSON.stringify(clean, null, 2);
-  const res = await putFile('news.json', content, f ? f.sha : null, message);
-  if (res.ok) { showGlobalAlert('✅ تم حفظ التغييرات بنجاح', 'success'); await loadNews(); renderDashboard(); renderNews(); }
-  else { const err = await res.json(); showGlobalAlert('❌ فشل الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error'); }
+  let jsonData;
+  try {
+    const raw = f ? JSON.parse(f.content) : {};
+    const clean = allNews.map(({ _idx, ...rest }) => rest);
+    if (Array.isArray(raw)) {
+      jsonData = clean;
+    } else {
+      jsonData = { ...raw, articles: clean, totalCount: clean.length, lastUpdated: new Date().toISOString() };
+    }
+  } catch(e) {
+    jsonData = { articles: allNews.map(({ _idx, ...rest }) => rest), totalCount: allNews.length, lastUpdated: new Date().toISOString() };
+  }
+  const content = JSON.stringify(jsonData, null, 2);
+  const res = await putFile('news.json', content, f ? f.sha : null, msg || 'تحديث الأخبار');
+  if (res.ok) { toast('✅ تم الحفظ بنجاح', 'success'); await loadNews(); renderDashboard(); renderNews(); }
+  else { const err = await res.json(); toast('❌ ' + (err.message || 'خطأ'), 'error'); }
   return res.ok;
 }
 
 function renderDashboard() {
-  document.getElementById('totalNews').textContent = allNews.length;
-  document.getElementById('urgentNews').textContent = allNews.filter(n => n.urgent || n.breaking).length;
-  const today = new Date().toISOString().slice(0, 10);
-  document.getElementById('todayNews').textContent = allNews.filter(n => (n.date || n.pubDate || n.published_at || '').startsWith(today)).length;
-  document.getElementById('categoriesCount').textContent = categories.length;
-  const recent = allNews.slice(-5).reverse();
-  const container = document.getElementById('recentNewsList');
-  if (!recent.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>لا توجد أخبار بعد</p></div>'; return; }
-  container.innerHTML = recent.map(n => `
-    <div class="news-item" style="margin-bottom:8px;">
-      <div class="news-item-title">${n.title || n.headline || 'بدون عنوان'}</div>
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('s-total').textContent    = allNews.length;
+  document.getElementById('s-breaking').textContent = allNews.filter(n => n.isBreaking).length;
+  document.getElementById('s-today').textContent    = allNews.filter(n => (n.date||'').startsWith(today)).length;
+  document.getElementById('s-cats').textContent     = categories.length;
+  const recent = [...allNews].reverse().slice(0,5);
+  document.getElementById('dash-recent').innerHTML = recent.length ? recent.map(n => `
+    <div class="news-item ${n.isBreaking?'breaking':''}">
+      <div class="news-item-title">${esc(n.title||'بدون عنوان')}</div>
       <div class="news-item-meta">
-        ${n.category ? `<span class="tag category">${n.category}</span>` : ''}
-        ${n.urgent||n.breaking ? `<span class="tag urgent">عاجل</span>` : ''}
-        <span class="date-text">${formatDate(n.date||n.pubDate||n.published_at)}</span>
+        ${n.category ? `<span class="tag tag-cat">${esc(n.category)}</span>` : ''}
+        ${n.isBreaking ? `<span class="tag tag-breaking">عاجل</span>` : ''}
+        <span class="news-date">${fmtDate(n.date)}</span>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><p>لا توجد أخبار</p></div>';
 }
 
 function renderNews() {
-  const search = document.getElementById('newsSearch').value.toLowerCase();
-  let filtered = allNews.filter(n => {
-    const title = (n.title || n.headline || '').toLowerCase();
-    const summary = (n.summary || n.description || '').toLowerCase();
-    const matchSearch = !search || title.includes(search) || summary.includes(search);
-    const matchFilter = currentNewsFilter === 'all' || n.category === currentNewsFilter || (currentNewsFilter === 'عاجل' && (n.urgent || n.breaking));
-    return matchSearch && matchFilter;
-  });
+  const search = document.getElementById('newsSearch').value.toLowerCase().trim();
+  let list = allNews.filter(n => {
+    const t = (n.title||'').toLowerCase();
+    const s = (n.summary||'').toLowerCase();
+    const ok1 = !search || t.includes(search) || s.includes(search);
+    const ok2 = currentNewsFilter==='all' || n.category===currentNewsFilter || (currentNewsFilter==='عاجل' && n.isBreaking);
+    return ok1 && ok2;
+  }).reverse();
 
-  // Update category tabs
-  const tabsEl = document.getElementById('categoryTabs');
-  const uniqueCats = extractCategories(allNews);
-  tabsEl.innerHTML = `
-    <button class="tab ${currentNewsFilter==='all'?'active':''}" onclick="setNewsFilter('all',this)">الكل</button>
-    <button class="tab ${currentNewsFilter==='عاجل'?'active':''}" onclick="setNewsFilter('عاجل',this)">🚨 عاجل</button>
-    ${uniqueCats.map(c => `<button class="tab ${currentNewsFilter===c?'active':''}" onclick="setNewsFilter('${c}',this)">${c}</button>`).join('')}
-  `;
-
-  document.getElementById('newsCountLabel').textContent = `الأخبار (${filtered.length})`;
-  const container = document.getElementById('newsList');
-  if (!filtered.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>لا توجد أخبار تطابق البحث</p></div>'; return; }
-  container.innerHTML = filtered.slice().reverse().map(n => `
-    <div class="news-item">
-      ${n.image ? `<img src="${n.image}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;" onerror="this.style.display='none'">` : ''}
-      <div class="news-item-title">${n.title || n.headline || 'بدون عنوان'}</div>
-      <div class="news-item-meta">
-        ${n.category ? `<span class="tag category">${n.category}</span>` : ''}
-        ${n.urgent||n.breaking ? `<span class="tag urgent">🚨 عاجل</span>` : ''}
-        ${n.pinned ? `<span class="tag" style="background:#6c3483">📌 مثبت</span>` : ''}
-        <span class="date-text">${formatDate(n.date||n.pubDate||n.published_at)}</span>
-      </div>
-      <div class="news-item-actions">
-        <button class="btn btn-sm btn-info" onclick="openEditNews(${n._idx})">✏️ تعديل</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteNewsItem(${n._idx})">🗑️ حذف</button>
-      </div>
-    </div>
+  const tabs = document.getElementById('newsTabs');
+  const cats = ['all', 'عاجل', ...categories];
+  tabs.innerHTML = cats.map(c => `
+    <button class="tab-btn ${c===currentNewsFilter?'active':''}" onclick="setNewsFilter('${esc(c)}',this)">${c==='all'?'الكل':c}</button>
   `).join('');
 
-  // Populate category selects
-  const catOpts = uniqueCats.map(c => `<option value="${c}">${c}</option>`).join('');
-  document.getElementById('newsCategory').innerHTML = '<option value="">-- اختر --</option>' + catOpts;
-  document.getElementById('rssCategory').innerHTML = '<option value="">-- بدون --</option>' + catOpts;
+  const el = document.getElementById('newsList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p>لا توجد نتائج</p></div>';
+    return;
+  }
+  el.innerHTML = list.map((n,i) => `
+    <div class="news-item ${n.isBreaking?'breaking':''}">
+      ${n.image ? `<img class="news-item-img" src="${esc(n.image)}" onerror="this.style.display='none'">` : ''}
+      <div class="news-item-title">${esc(n.title||'بدون عنوان')}</div>
+      <div class="news-item-meta">
+        ${n.category ? `<span class="tag tag-cat">${esc(n.category)}</span>` : ''}
+        ${n.isBreaking ? `<span class="tag tag-breaking">🔴 عاجل</span>` : ''}
+        ${n.importance ? `<span class="tag tag-importance">★ ${n.importance}</span>` : ''}
+        <span class="news-date">📅 ${fmtDate(n.date)}</span>
+      </div>
+      <div style="clear:both;"></div>
+      <div class="news-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editNews(${n._idx})">✏️ تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteNews(${n._idx})">🗑️</button>
+        ${n.link ? `<button class="btn btn-info btn-sm" onclick="openUrl('${esc(n.link)}')">🔗</button>` : ''}
+      </div>
+    </div>`).join('');
 }
 
-function setNewsFilter(val, el) {
-  currentNewsFilter = val;
-  document.querySelectorAll('#categoryTabs .tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
+function setNewsFilter(f, btn) {
+  currentNewsFilter = f;
+  document.querySelectorAll('#newsTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
   renderNews();
 }
 
-function filterNews() { renderNews(); }
-
-function openAddNews() {
-  editingNewsIndex = -1;
-  document.getElementById('newsModalTitle').textContent = '✏️ إضافة خبر جديد';
-  clearNewsForm();
-  document.getElementById('newsDate').value = new Date().toISOString().slice(0,16);
-  populateCategorySelect();
-  openModal('newsModal');
-}
-
-function openEditNews(idx) {
-  editingNewsIndex = idx;
-  const n = allNews[idx];
-  document.getElementById('newsModalTitle').textContent = '✏️ تعديل الخبر';
-  document.getElementById('newsTitle').value = n.title || n.headline || '';
-  document.getElementById('newsSummary').value = n.summary || n.description || '';
-  document.getElementById('newsContent').value = n.content || n.body || '';
-  document.getElementById('newsCategory').value = n.category || '';
-  document.getElementById('newsSource').value = n.source || '';
-  document.getElementById('newsUrl').value = n.url || n.link || '';
-  document.getElementById('newsImage').value = n.image || n.thumbnail || '';
-  document.getElementById('newsAuthor').value = n.author || '';
-  document.getElementById('newsDate').value = (n.date || n.pubDate || new Date().toISOString()).slice(0,16);
-  document.getElementById('newsTags').value = Array.isArray(n.tags) ? n.tags.join(', ') : (n.tags || '');
-  document.getElementById('newsUrgent').checked = !!(n.urgent || n.breaking);
-  document.getElementById('newsPinned').checked = !!n.pinned;
-  previewImg();
-  populateCategorySelect();
-  openModal('newsModal');
-}
-
-function populateCategorySelect() {
-  const cats = extractCategories(allNews);
-  const sel = document.getElementById('newsCategory');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">-- اختر --</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-  if (cur) sel.value = cur;
-}
-
-function clearNewsForm() {
-  ['newsTitle','newsSummary','newsContent','newsSource','newsUrl','newsImage','newsAuthor','newsTags'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('newsCategory').value = '';
-  document.getElementById('newsUrgent').checked = false;
-  document.getElementById('newsPinned').checked = false;
-  document.getElementById('imgPreview').style.display = 'none';
+// News Modal
+let editingNewsIdx = -1;
+function openNewsModal(idx) {
+  editingNewsIdx = (idx !== undefined) ? idx : -1;
+  const n = editingNewsIdx >= 0 ? allNews.find(x => x._idx === editingNewsIdx) : null;
+  document.getElementById('newsModalTitle').textContent = n ? '✏️ تعديل الخبر' : '✏️ إضافة خبر';
+  document.getElementById('newsTitle').value     = n ? (n.title||'') : '';
+  document.getElementById('newsSummary').value   = n ? (n.summary||'') : '';
+  document.getElementById('newsBody').value      = n ? (n.body||'') : '';
+  document.getElementById('newsCategory').value  = n ? (n.category||'أخبار عامة') : 'أخبار عامة';
+  document.getElementById('newsLink').value      = n ? (n.link||'') : '';
+  document.getElementById('newsImage').value     = n ? (n.image||'') : '';
+  document.getElementById('newsSource').value    = n ? (n.source||'') : '';
+  document.getElementById('newsImportance').value= n ? (n.importance||5) : 5;
+  document.getElementById('newsBreaking').checked= n ? (n.isBreaking||false) : false;
   document.getElementById('newsModalAlert').innerHTML = '';
+  const prev = document.getElementById('newsImgPreview');
+  if (n && n.image) { prev.src = n.image; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
+  openModal('newsModal');
 }
-
-function previewImg() {
-  const url = document.getElementById('newsImage').value;
-  const img = document.getElementById('imgPreview');
-  if (url) { img.src = url; img.style.display = 'block'; }
-  else { img.style.display = 'none'; }
+function editNews(idx) { openNewsModal(idx); }
+function previewNewsImg() {
+  const url = v('newsImage');
+  const prev = document.getElementById('newsImgPreview');
+  if (url) { prev.src = url; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
 }
 
 async function saveNews() {
-  const title = document.getElementById('newsTitle').value.trim();
-  const summary = document.getElementById('newsSummary').value.trim();
+  const title = v('newsTitle').trim();
   if (!title) { document.getElementById('newsModalAlert').innerHTML = '<div class="alert alert-error">العنوان مطلوب</div>'; return; }
-
-  const btn = document.getElementById('saveNewsBtn');
-  btn.textContent = '⏳ جاري الحفظ...'; btn.disabled = true;
-
-  const newsObj = {
-    title,
-    summary,
-    content: document.getElementById('newsContent').value.trim(),
-    category: document.getElementById('newsCategory').value,
-    source: document.getElementById('newsSource').value.trim(),
-    url: document.getElementById('newsUrl').value.trim(),
-    image: document.getElementById('newsImage').value.trim(),
-    author: document.getElementById('newsAuthor').value.trim(),
-    date: document.getElementById('newsDate').value || new Date().toISOString(),
-    tags: document.getElementById('newsTags').value.split(',').map(t=>t.trim()).filter(Boolean),
-    urgent: document.getElementById('newsUrgent').checked,
-    breaking: document.getElementById('newsUrgent').checked,
-    pinned: document.getElementById('newsPinned').checked,
-    id: editingNewsIndex >= 0 ? (allNews[editingNewsIndex].id || Date.now()) : Date.now(),
-    updatedAt: new Date().toISOString()
+  const btn = document.getElementById('newsSaveBtn');
+  btn.disabled = true; btn.textContent = '⏳';
+  const n = {
+    id: editingNewsIdx >= 0 ? (allNews.find(x=>x._idx===editingNewsIdx)||{}).id : Date.now(),
+    title: v('newsTitle').trim(),
+    summary: v('newsSummary').trim(),
+    body: v('newsBody').trim(),
+    category: v('newsCategory'),
+    link: v('newsLink').trim(),
+    image: v('newsImage').trim(),
+    source: v('newsSource').trim(),
+    importance: parseInt(v('newsImportance')) || 5,
+    isBreaking: document.getElementById('newsBreaking').checked,
+    date: new Date().toISOString().slice(0,16).replace('T',' ')
   };
-
-  if (editingNewsIndex >= 0) {
-    allNews[editingNewsIndex] = { ...allNews[editingNewsIndex], ...newsObj };
+  if (editingNewsIdx >= 0) {
+    const i = allNews.findIndex(x => x._idx === editingNewsIdx);
+    if (i >= 0) allNews[i] = { ...allNews[i], ...n };
   } else {
-    allNews.push(newsObj);
+    allNews.push({ ...n, _idx: allNews.length });
   }
-
-  const ok = await saveNewsJson(editingNewsIndex >= 0 ? `تعديل خبر: ${title}` : `إضافة خبر: ${title}`);
-  btn.textContent = '💾 حفظ'; btn.disabled = false;
-  if (ok) { closeModal('newsModal'); renderDashboard(); }
-  else { document.getElementById('newsModalAlert').innerHTML = '<div class="alert alert-error">فشل الحفظ، حاول مجدداً</div>'; }
+  const ok = await saveNewsJson(editingNewsIdx >= 0 ? `تعديل: ${n.title}` : `إضافة: ${n.title}`);
+  btn.disabled = false; btn.textContent = '💾 حفظ';
+  if (ok) closeModal('newsModal');
 }
 
-function deleteNewsItem(idx) {
-  openConfirm('حذف الخبر', `هل تريد حذف الخبر: "${allNews[idx].title || 'هذا الخبر'}"؟`, async () => {
-    allNews.splice(idx, 1);
-    allNews = allNews.map((n, i) => ({...n, _idx: i}));
+function confirmDeleteNews(idx) {
+  document.getElementById('deleteMsg').textContent = 'سيتم حذف هذا الخبر نهائياً من news.json';
+  deleteFn = async () => {
+    allNews = allNews.filter(n => n._idx !== idx);
+    allNews = allNews.map((n,i) => ({...n, _idx:i}));
+    closeModal('deleteModal');
     await saveNewsJson('حذف خبر');
-    renderDashboard(); renderNews();
-  });
+  };
+  openModal('deleteModal');
+  document.getElementById('deleteConfirmBtn').onclick = deleteFn;
 }
 
-// ============================================================
-// CATEGORIES
-// ============================================================
-function renderCategories() {
-  const cats = extractCategories(allNews);
-  const container = document.getElementById('categoriesList');
-  if (!cats.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><p>لا توجد تصنيفات بعد</p></div>'; return; }
-  container.innerHTML = cats.map((c, i) => `
-    <div class="news-item">
-      <div class="flex-between">
-        <div>
-          <span style="font-size:16px; font-weight:700;">${c}</span>
-          <span class="tag" style="margin-right:8px;">${allNews.filter(n=>n.category===c).length} خبر</span>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-sm btn-info" onclick="openEditCategory('${c}')">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteCategoryItems('${c}')">🗑️</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function openAddCategory() {
-  editingCatIndex = -1;
-  document.getElementById('catModalTitle').textContent = '📂 إضافة تصنيف جديد';
-  document.getElementById('catName').value = '';
-  document.getElementById('catIcon').value = '';
-  document.getElementById('catColor').value = '';
-  document.getElementById('catOrder').value = '';
-  document.getElementById('catModalAlert').innerHTML = '';
-  document.querySelectorAll('.color-option').forEach(x => x.classList.remove('selected'));
-  openModal('categoryModal');
-}
-
-function openEditCategory(name) {
-  editingCatIndex = name;
-  document.getElementById('catModalTitle').textContent = '✏️ تعديل التصنيف';
-  document.getElementById('catName').value = name;
-  document.getElementById('catModalAlert').innerHTML = '';
-  openModal('categoryModal');
-}
-
-async function saveCategory() {
-  const newName = document.getElementById('catName').value.trim();
-  if (!newName) { document.getElementById('catModalAlert').innerHTML = '<div class="alert alert-error">الاسم مطلوب</div>'; return; }
-
-  if (editingCatIndex && editingCatIndex !== -1) {
-    // Rename category in all news
-    allNews = allNews.map(n => n.category === editingCatIndex ? {...n, category: newName} : n);
-    await saveNewsJson(`تعديل التصنيف: ${editingCatIndex} → ${newName}`);
-  }
-  closeModal('categoryModal');
-  renderCategories();
-  renderNews();
-}
-
-function deleteCategoryItems(cat) {
-  const count = allNews.filter(n => n.category === cat).length;
-  openConfirm('حذف التصنيف', `هل تريد حذف تصنيف "${cat}" و${count} خبر مرتبط به؟`, async () => {
-    allNews = allNews.filter(n => n.category !== cat);
-    allNews = allNews.map((n, i) => ({...n, _idx: i}));
-    await saveNewsJson(`حذف تصنيف: ${cat}`);
-    renderCategories(); renderNews(); renderDashboard();
-  });
-}
-
-// ============================================================
-// SITE SETTINGS
-// ============================================================
-async function loadRssSources() {
+// ════════════════════════════════════════
+// FILES
+// ════════════════════════════════════════
+async function navigateDir(path) {
+  currentDir = path;
+  updatePathBar(path);
+  document.getElementById('filesList').innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
   try {
-    const f = await getFile('update_news.py');
-    if (!f) return;
-    rssSources = [];
-    const regex = /['"]https?:\/\/[^'"]+rss[^'"]*['"]/gi;
-    const matches = f.content.match(regex) || [];
-    matches.forEach(m => rssSources.push(m.replace(/['"]/g, '')));
-    renderRssSources();
-  } catch(e) {}
+    const items = await listDir(path);
+    renderFileList(items, path);
+  } catch(e) {
+    document.getElementById('filesList').innerHTML = `<div class="alert alert-error">خطأ: ${e.message}</div>`;
+  }
 }
 
-function renderRssSources() {
-  const container = document.getElementById('rssSourcesList');
-  if (!rssSources.length) { container.innerHTML = '<p style="color:var(--text2); font-size:13px;">لا توجد مصادر RSS محددة</p>'; return; }
-  container.innerHTML = rssSources.map((url, i) => `
-    <div class="news-item" style="margin-bottom:8px;">
-      <div style="font-size:12px; word-break:break-all; color:var(--info);">${url}</div>
-      <div style="margin-top:8px;">
-        <button class="btn btn-sm btn-danger" onclick="deleteRssSource(${i})">🗑️ حذف</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function openAddRss() { openModal('rssModal'); }
-
-async function saveRss() {
-  const url = document.getElementById('rssUrl').value.trim();
-  if (!url) { document.getElementById('rssModalAlert').innerHTML = '<div class="alert alert-error">الرابط مطلوب</div>'; return; }
-  rssSources.push(url);
-  closeModal('rssModal');
-  renderRssSources();
-  showGlobalAlert('✅ تم إضافة المصدر. يمكنك تعديل ملف update_news.py لتطبيق التغييرات.', 'info');
-}
-
-async function deleteRssSource(i) {
-  rssSources.splice(i, 1);
-  renderRssSources();
-  showGlobalAlert('تم حذف المصدر من القائمة. عدّل ملف update_news.py لتطبيق التغييرات.', 'warning');
-}
-
-async function deleteOldNews() {
-  const days = parseInt(document.getElementById('deleteOlderThan').value) || 30;
-  const cutoff = new Date(Date.now() - days * 86400000).toISOString();
-  const before = allNews.length;
-  allNews = allNews.filter(n => {
-    const d = n.date || n.pubDate || n.published_at || '';
-    return !d || d >= cutoff;
+function updatePathBar(path) {
+  const segs = path ? path.split('/') : [];
+  let html = `<span class="path-seg" onclick="navigateDir('')">🏠 root</span>`;
+  let cur = '';
+  segs.forEach(s => {
+    cur += (cur ? '/' : '') + s;
+    const p = cur;
+    html += `<span class="path-sep">/</span><span class="path-seg" onclick="navigateDir('${esc(p)}')">${esc(s)}</span>`;
   });
-  allNews = allNews.map((n, i) => ({...n, _idx: i}));
-  const deleted = before - allNews.length;
-  if (!deleted) { showGlobalAlert('لا توجد أخبار أقدم من ' + days + ' يوم', 'info'); return; }
-  await saveNewsJson(`حذف ${deleted} خبر أقدم من ${days} يوم`);
-  renderDashboard(); renderNews();
+  document.getElementById('pathBar').innerHTML = html;
 }
 
-function confirmDeleteAllNews() {
-  openConfirm('⚠️ حذف جميع الأخبار', 'هل أنت متأكد؟ سيتم حذف جميع الأخبار نهائياً ولا يمكن التراجع!', async () => {
-    allNews = [];
-    await saveNewsJson('حذف جميع الأخبار');
-    renderDashboard(); renderNews();
+function getFileIcon(name, type) {
+  if (type === 'dir') return '📁';
+  const ext = name.split('.').pop().toLowerCase();
+  const map = { html:'🌐', js:'📜', css:'🎨', json:'📋', md:'📝', yml:'⚙️', yaml:'⚙️',
+    py:'🐍', sh:'🔧', txt:'📄', jpg:'🖼️', jpeg:'🖼️', png:'🖼️', gif:'🖼️', svg:'🖼️',
+    pdf:'📕', zip:'📦', apk:'📱', xml:'📋', java:'☕', gradle:'🔨', gitignore:'🚫' };
+  return map[ext] || '📄';
+}
+
+function renderFileList(items, currentPath) {
+  const sorted = [...items].sort((a,b) => {
+    if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+    return a.name.localeCompare(b.name);
   });
+  if (!sorted.length) {
+    document.getElementById('filesList').innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><p>مجلد فارغ</p></div>';
+    return;
+  }
+  document.getElementById('filesList').innerHTML = sorted.map(item => {
+    const icon = getFileIcon(item.name, item.type);
+    const isDir = item.type === 'dir';
+    const size = item.size ? formatSize(item.size) : '';
+    return `
+      <div class="file-list-item" onclick="${isDir ? `navigateDir('${esc(item.path)}')` : `openFileEditor('${esc(item.path)}')`}">
+        <span class="file-icon">${icon}</span>
+        <div class="file-info">
+          <div class="file-name">${esc(item.name)}${isDir?'/':''}</div>
+          ${size ? `<div class="file-meta">${size}</div>` : ''}
+        </div>
+        ${!isDir ? `
+        <div class="file-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" onclick="openFileEditor('${esc(item.path)}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteFile('${esc(item.path)}','${esc(item.sha||'')}')">🗑️</button>
+        </div>` : ''}
+      </div>`;
+  }).join('');
 }
 
-// ============================================================
-// GITHUB WORKFLOWS
-// ============================================================
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+async function openFileEditor(filePath) {
+  const ext = filePath.split('.').pop().toLowerCase();
+  const modeMap = {
+    js:'javascript', json:'javascript', html:'htmlmixed', css:'css',
+    xml:'xml', yml:'yaml', yaml:'yaml', py:'python', sh:'shell',
+    md:'markdown', markdown:'markdown', java:'text/x-java'
+  };
+  const mode = modeMap[ext] || 'text/plain';
+  document.getElementById('editorPath').textContent = filePath;
+  document.getElementById('editorStatus').textContent = 'جاري التحميل...';
+  document.getElementById('editorSaveBtn').disabled = true;
+  document.getElementById('commitMsg').value = `تحديث ${filePath.split('/').pop()}`;
+
+  // Init CodeMirror if needed
+  if (!cmEditor) {
+    cmEditor = CodeMirror(document.getElementById('editorContainer'), {
+      theme: 'dracula',
+      lineNumbers: true,
+      lineWrapping: false,
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      indentUnit: 2,
+      tabSize: 2,
+      indentWithTabs: false,
+      extraKeys: { 'Ctrl-S': saveEditorFile, 'Cmd-S': saveEditorFile }
+    });
+  }
+
+  document.getElementById('editorOverlay').classList.add('open');
+
+  try {
+    const f = await getFile(filePath);
+    if (!f) throw new Error('لم يتم العثور على الملف');
+    currentEditorPath = filePath;
+    currentEditorSha  = f.sha;
+    cmEditor.setOption('mode', mode);
+    cmEditor.setValue(f.content);
+    cmEditor.clearHistory();
+    cmEditor.refresh();
+    document.getElementById('editorStatus').textContent = `${formatSize(f.size||0)} • ${mode}`;
+    document.getElementById('editorSaveBtn').disabled = false;
+  } catch(e) {
+    document.getElementById('editorStatus').textContent = '❌ خطأ: ' + e.message;
+  }
+}
+
+async function saveEditorFile() {
+  if (!currentEditorPath) return;
+  const content = cmEditor.getValue();
+  const msg = v('commitMsg') || `تحديث ${currentEditorPath.split('/').pop()}`;
+  const btn = document.getElementById('editorSaveBtn');
+  btn.disabled = true; btn.textContent = '⏳';
+  document.getElementById('editorStatus').textContent = 'جاري الحفظ...';
+  try {
+    const res = await putFile(currentEditorPath, content, currentEditorSha, msg);
+    if (res.ok) {
+      const d = await res.json();
+      currentEditorSha = d.content ? d.content.sha : currentEditorSha;
+      toast('✅ تم الحفظ بنجاح', 'success');
+      document.getElementById('editorStatus').textContent = '✅ محفوظ';
+    } else {
+      const err = await res.json();
+      toast('❌ ' + (err.message || 'فشل الحفظ'), 'error');
+      document.getElementById('editorStatus').textContent = '❌ فشل';
+    }
+  } catch(e) { toast('❌ ' + e.message, 'error'); }
+  btn.disabled = false; btn.textContent = '💾 حفظ';
+}
+
+function closeEditor() {
+  document.getElementById('editorOverlay').classList.remove('open');
+  if (document.getElementById('page-files').classList.contains('active')) {
+    navigateDir(currentDir);
+  }
+}
+
+function editorSearch() {
+  if (cmEditor) CodeMirror.commands.find(cmEditor);
+}
+
+function editorFormat() {
+  if (!cmEditor) return;
+  const mode = cmEditor.getOption('mode');
+  if (mode === 'javascript' || (typeof mode === 'object' && mode.name === 'javascript')) {
+    try {
+      const val = cmEditor.getValue();
+      const formatted = JSON.stringify(JSON.parse(val), null, 2);
+      cmEditor.setValue(formatted);
+      toast('✅ تم التنسيق', 'success');
+    } catch(e) { toast('ليس JSON صالح', 'warn'); }
+  } else {
+    toast('التنسيق متاح للـ JSON فقط', 'info');
+  }
+}
+
+function createNewFile() {
+  document.getElementById('newFileName').value = '';
+  document.getElementById('newFilePath').value = currentDir;
+  openModal('newFileModal');
+}
+
+function confirmCreateFile() {
+  const name = v('newFileName').trim();
+  const dir  = v('newFilePath').trim();
+  if (!name) { toast('أدخل اسم الملف', 'error'); return; }
+  const fullPath = dir ? `${dir}/${name}` : name;
+  closeModal('newFileModal');
+  currentEditorPath = fullPath;
+  currentEditorSha  = '';
+  document.getElementById('commitMsg').value = `إضافة ${name}`;
+  if (!cmEditor) {
+    cmEditor = CodeMirror(document.getElementById('editorContainer'), {
+      theme:'dracula', lineNumbers:true, lineWrapping:false, matchBrackets:true,
+      autoCloseBrackets:true, indentUnit:2, tabSize:2, indentWithTabs:false,
+      extraKeys:{'Ctrl-S':saveEditorFile,'Cmd-S':saveEditorFile}
+    });
+  }
+  const ext = name.split('.').pop().toLowerCase();
+  const modeMap = { js:'javascript',json:'javascript',html:'htmlmixed',css:'css',xml:'xml',yml:'yaml',yaml:'yaml',py:'python',sh:'shell',md:'markdown',java:'text/x-java' };
+  cmEditor.setOption('mode', modeMap[ext] || 'text/plain');
+  cmEditor.setValue('');
+  cmEditor.clearHistory();
+  document.getElementById('editorPath').textContent = fullPath;
+  document.getElementById('editorStatus').textContent = 'ملف جديد';
+  document.getElementById('editorSaveBtn').disabled = false;
+  document.getElementById('editorOverlay').classList.add('open');
+  setTimeout(() => cmEditor.refresh(), 100);
+}
+
+function uploadFile() {
+  document.getElementById('uploadPath').value = currentDir ? currentDir + '/' : '';
+  document.getElementById('uploadCommitMsg').value = 'إضافة ملف';
+  document.getElementById('uploadPreview').textContent = '';
+  document.getElementById('uploadAlert').innerHTML = '';
+  openModal('uploadModal');
+}
+
+function onUploadSelected() {
+  const f = document.getElementById('uploadInput').files[0];
+  if (!f) return;
+  document.getElementById('uploadPreview').textContent = `${f.name} (${formatSize(f.size)})`;
+  const cur = v('uploadPath');
+  if (!cur || cur.endsWith('/')) {
+    document.getElementById('uploadPath').value = (cur || '') + f.name;
+  }
+  document.getElementById('uploadCommitMsg').value = `إضافة ${f.name}`;
+}
+
+async function confirmUpload() {
+  const file = document.getElementById('uploadInput').files[0];
+  const path = v('uploadPath').trim();
+  const msg  = v('uploadCommitMsg').trim() || 'رفع ملف';
+  if (!file || !path) { document.getElementById('uploadAlert').innerHTML = '<div class="alert alert-error">اختر ملفاً وأدخل المسار</div>'; return; }
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true; btn.textContent = '⏳ جاري الرفع...';
+  try {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const b64 = e.target.result.split(',')[1];
+      const existing = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${cfg.branch}`);
+      let sha = null;
+      if (existing.ok) { const d = await existing.json(); sha = d.sha; }
+      const body = { message: msg, content: b64, branch: cfg.branch };
+      if (sha) body.sha = sha;
+      const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`, {
+        method:'PUT', body:JSON.stringify(body)
+      });
+      if (res.ok) {
+        toast('✅ تم رفع الملف بنجاح', 'success');
+        closeModal('uploadModal');
+        navigateDir(currentDir);
+      } else {
+        const err = await res.json();
+        document.getElementById('uploadAlert').innerHTML = `<div class="alert alert-error">❌ ${err.message||'فشل'}</div>`;
+      }
+      btn.disabled = false; btn.textContent = '⬆️ رفع';
+    };
+    reader.readAsDataURL(file);
+  } catch(e) {
+    document.getElementById('uploadAlert').innerHTML = `<div class="alert alert-error">❌ ${e.message}</div>`;
+    btn.disabled = false; btn.textContent = '⬆️ رفع';
+  }
+}
+
+function confirmDeleteFile(path, sha) {
+  document.getElementById('deleteMsg').textContent = `حذف: ${path}`;
+  deleteFn = async () => {
+    closeModal('deleteModal');
+    try {
+      let fileSha = sha;
+      if (!fileSha) { const f = await getFile(path); fileSha = f ? f.sha : null; }
+      if (!fileSha) { toast('لا يمكن الحصول على SHA', 'error'); return; }
+      const res = await deleteFile(path, fileSha, `حذف ${path.split('/').pop()}`);
+      if (res.ok) { toast('✅ تم الحذف', 'success'); navigateDir(currentDir); }
+      else { const err = await res.json(); toast('❌ ' + (err.message||'فشل'), 'error'); }
+    } catch(e) { toast('❌ ' + e.message, 'error'); }
+  };
+  document.getElementById('deleteConfirmBtn').onclick = deleteFn;
+  openModal('deleteModal');
+}
+
+// ════════════════════════════════════════
+// WORKFLOWS & RUNS
+// ════════════════════════════════════════
+let allRuns = [];
+let allWorkflows = [];
+
+async function loadRuns() {
+  try {
+    const d = await apiGet('/actions/runs?per_page=20');
+    allRuns = d.workflow_runs || [];
+  } catch(e) { allRuns = []; }
+}
+
 async function loadWorkflows() {
   try {
-    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/actions/workflows`);
-    if (!res.ok) return;
-    const data = await res.json();
-    const container = document.getElementById('workflowsList');
-    if (!data.workflows || !data.workflows.length) { container.innerHTML = '<p style="color:var(--text2);">لا توجد workflows</p>'; return; }
-    container.innerHTML = data.workflows.map(w => `
-      <div class="news-item" style="margin-bottom:8px;">
-        <div class="flex-between">
-          <div>
-            <div style="font-weight:700; font-size:14px;">${w.name}</div>
-            <div style="color:var(--text2); font-size:11px;">${w.path}</div>
-            <span class="chip" style="margin-top:6px;"><span style="color:${w.state==='active'?'var(--success)':'var(--danger)'}">●</span> ${w.state==='active'?'نشط':'معطل'}</span>
-          </div>
-          <button class="btn btn-sm btn-primary" onclick="triggerWorkflow('${w.path.split('/').pop()}')">▶️ تشغيل</button>
-        </div>
-      </div>
-    `).join('');
-  } catch(e) {}
+    const d = await apiGet('/actions/workflows');
+    allWorkflows = d.workflows || [];
+    renderWorkflows();
+  } catch(e) { allWorkflows = []; }
 }
 
-async function loadWorkflowRuns() {
-  try {
-    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/actions/runs?per_page=10`);
-    if (!res.ok) return;
-    const data = await res.json();
-    const container = document.getElementById('workflowRunsList');
-    if (!data.workflow_runs || !data.workflow_runs.length) { container.innerHTML = '<p style="color:var(--text2);">لا يوجد سجل تشغيل</p>'; return; }
-    const statusIcon = s => ({ completed:'✅', in_progress:'⏳', queued:'⏸️', failure:'❌', cancelled:'⛔' })[s] || '❓';
-    container.innerHTML = data.workflow_runs.map(r => `
-      <div style="padding:10px; background:var(--surface2); border-radius:10px; margin-bottom:8px; border:1px solid var(--border);">
-        <div class="flex-between">
-          <div style="font-weight:600; font-size:13px;">${statusIcon(r.conclusion||r.status)} ${r.name}</div>
-          <span style="font-size:11px; color:var(--text2);">${formatDate(r.created_at)}</span>
+function renderRunsList(runs, containerId) {
+  const el = document.getElementById(containerId);
+  if (!runs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><p>لا توجد runs</p></div>'; return; }
+  el.innerHTML = runs.map(r => {
+    const st = r.status === 'completed' ? r.conclusion : r.status;
+    const icons = { success:'✅', failure:'❌', in_progress:'⏳', queued:'⏳', cancelled:'⛔', skipped:'⏭️' };
+    const started = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '';
+    return `
+      <div class="workflow-run ${st}" onclick="showRunDetails('${r.id}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="run-name">${esc(r.name||r.display_title||'Run')}</div>
+          <span class="run-status ${st}">${icons[st]||'❓'} ${st}</span>
         </div>
-        <div style="font-size:11px; color:var(--text2); margin-top:4px;">الفرع: ${r.head_branch} • ${r.conclusion||r.status}</div>
+        <div class="run-meta">
+          <span>🌿 ${esc(r.head_branch||'')}</span>
+          <span>📅 ${started}</span>
+          <span>#${r.run_number}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderDashRuns() { renderRunsList(allRuns.slice(0,5), 'dash-runs'); }
+
+function renderRunsTab() {
+  if (!document.getElementById('actions-runs').style.display ||
+      document.getElementById('actions-runs').style.display !== 'none') {
+    renderRunsList(allRuns, 'runsList');
+  }
+}
+
+function renderWorkflows() {
+  const el = document.getElementById('workflowsList');
+  if (!allWorkflows.length) { el.innerHTML = '<div class="loading"><div class="spinner"></div></div>'; return; }
+  el.innerHTML = allWorkflows.map(w => `
+    <div class="card" style="margin-bottom:10px;">
+      <div class="card-header">
+        <span class="card-title">⚙️ ${esc(w.name)}</span>
+        <span class="chip">${w.state}</span>
       </div>
-    `).join('');
-  } catch(e) {}
+      <div style="font-size:11px;color:var(--text2);font-family:monospace;margin-bottom:10px;">${esc(w.path)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="triggerWorkflowById('${w.id}','${esc(w.name)}')">▶️ تشغيل</button>
+        <button class="btn btn-ghost btn-sm" onclick="openFileEditor('${esc(w.path.replace(/^\//,''))}')">✏️ تعديل</button>
+      </div>
+    </div>`).join('');
+}
+
+async function showRunDetails(runId) {
+  document.getElementById('runModalTitle').textContent = 'تفاصيل الـ Run #' + runId;
+  document.getElementById('runModalContent').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  openModal('runModal');
+  try {
+    const jobs = await apiGet(`/actions/runs/${runId}/jobs`);
+    const runs = allRuns.find(r => r.id == runId);
+    let html = '';
+    if (runs) {
+      const st = runs.status === 'completed' ? runs.conclusion : runs.status;
+      html += `<div class="chip" style="margin-bottom:10px;">${st} • ${runs.head_branch} • #${runs.run_number}</div><br>`;
+      html += `<a href="${runs.html_url}" onclick="openUrl('${runs.html_url}');return false;" style="color:var(--info);font-size:12px;font-family:monospace;">فتح في GitHub ↗</a>`;
+    }
+    if (jobs.jobs && jobs.jobs.length) {
+      jobs.jobs.forEach(job => {
+        const jst = job.status==='completed' ? job.conclusion : job.status;
+        const icons = {success:'✅',failure:'❌',in_progress:'⏳',queued:'⏳',cancelled:'⛔',skipped:'⏭️'};
+        html += `<div style="margin-top:14px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;">${icons[jst]||'❓'} ${esc(job.name)}</div>`;
+        html += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">`;
+        (job.steps||[]).forEach(s => {
+          const si = {success:'✅',failure:'❌',in_progress:'⏳',skipped:'⏭️',cancelled:'⛔'};
+          html += `<div class="job-step">${si[s.conclusion||s.status]||'❓'} ${esc(s.name)}</div>`;
+        });
+        html += `</div></div>`;
+      });
+    }
+    document.getElementById('runModalContent').innerHTML = html || '<p style="color:var(--text2)">لا توجد تفاصيل</p>';
+  } catch(e) {
+    document.getElementById('runModalContent').innerHTML = `<div class="alert alert-error">${e.message}</div>`;
+  }
+}
+
+function switchActionsTab(tab, btn) {
+  document.querySelectorAll('#actionsTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('actions-runs').style.display      = tab==='runs'      ? 'block' : 'none';
+  document.getElementById('actions-workflows').style.display = tab==='workflows' ? 'block' : 'none';
+  if (tab === 'runs') renderRunsList(allRuns, 'runsList');
+  if (tab === 'workflows') renderWorkflows();
 }
 
 async function triggerWorkflow(filename) {
-  showGlobalAlert('⏳ جاري تشغيل ' + filename + '...', 'info');
+  toast('⏳ جاري التشغيل...', 'info');
   try {
-    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/actions/workflows/${filename}/dispatches`, cfg.token, {
+    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/actions/workflows/${filename}/dispatches`, {
       method: 'POST',
       body: JSON.stringify({ ref: cfg.branch })
     });
     if (res.ok || res.status === 204) {
-      showGlobalAlert('✅ تم تشغيل ' + filename + ' بنجاح! تحقق من سجل التشغيل.', 'success');
-      setTimeout(() => loadWorkflowRuns(), 3000);
+      toast('✅ تم تشغيل الـ Workflow', 'success');
+      setTimeout(() => { loadRuns(); renderDashRuns(); }, 3000);
     } else {
       const err = await res.json();
-      showGlobalAlert('❌ فشل التشغيل: ' + (err.message || 'تأكد من صلاحية workflow_dispatch'), 'error');
+      toast('❌ ' + (err.message || 'فشل'), 'error');
     }
-  } catch(e) { showGlobalAlert('❌ خطأ: ' + e.message, 'error'); }
+  } catch(e) { toast('❌ ' + e.message, 'error'); }
 }
 
-// ============================================================
-// FILE MANAGER
-// ============================================================
-async function loadRepoFiles() {
+async function triggerWorkflowById(id, name) {
+  toast(`⏳ تشغيل: ${name}...`, 'info');
   try {
-    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/?ref=${cfg.branch}`);
-    if (!res.ok) return;
-    const files = await res.json();
-    const container = document.getElementById('filesList');
-    const editable = files.filter(f => f.type === 'file' && (f.name.endsWith('.html') || f.name.endsWith('.js') || f.name.endsWith('.json') || f.name.endsWith('.css') || f.name.endsWith('.py') || f.name.endsWith('.yml') || f.name.endsWith('.md') || f.name.endsWith('.txt')));
-    container.innerHTML = editable.map(f => `
-      <div style="padding:10px; background:var(--surface2); border-radius:10px; margin-bottom:8px; border:1px solid var(--border);">
-        <div class="flex-between">
-          <div>
-            <span style="font-size:14px; font-weight:600;">${fileIcon(f.name)} ${f.name}</span>
-            <div style="color:var(--text2); font-size:11px; margin-top:3px;">${formatBytes(f.size)}</div>
-          </div>
-          <button class="btn btn-sm btn-info" onclick="openFileEditor('${f.path}')">✏️ تعديل</button>
-        </div>
-      </div>
-    `).join('');
-  } catch(e) {}
+    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/actions/workflows/${id}/dispatches`, {
+      method:'POST', body: JSON.stringify({ref: cfg.branch})
+    });
+    if (res.ok || res.status===204) {
+      toast('✅ تم تشغيل: ' + name, 'success');
+      setTimeout(() => loadRuns(), 3000);
+    } else {
+      const err = await res.json();
+      toast('❌ ' + (err.message||'فشل'), 'error');
+    }
+  } catch(e) { toast('❌ ' + e.message, 'error'); }
 }
 
-function fileIcon(name) {
-  if (name.endsWith('.html')) return '🌐';
-  if (name.endsWith('.js')) return '⚡';
-  if (name.endsWith('.json')) return '📋';
-  if (name.endsWith('.css')) return '🎨';
-  if (name.endsWith('.py')) return '🐍';
-  if (name.endsWith('.yml') || name.endsWith('.yaml')) return '⚙️';
-  return '📄';
+async function triggerBuildAPK() {
+  const version = v('apkVersion') || '1.0.0';
+  toast('⏳ جاري بناء APK...', 'info');
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/actions/workflows/build-apk.yml/dispatches`, {
+      method:'POST', body:JSON.stringify({ref:cfg.branch, inputs:{version}})
+    });
+    if (res.ok || res.status===204) {
+      toast('✅ بدأ بناء APK v' + version, 'success');
+      setTimeout(() => { loadRuns(); navigateTo('actions'); }, 3000);
+    } else {
+      const err = await res.json();
+      toast('❌ ' + (err.message||'فشل'), 'error');
+    }
+  } catch(e) { toast('❌ ' + e.message, 'error'); }
 }
 
-async function openFileEditor(path) {
-  document.getElementById('fileModalTitle').textContent = `📄 تعديل: ${path}`;
-  document.getElementById('fileContent').value = 'جاري التحميل...';
-  document.getElementById('fileCommitMsg').value = `تعديل ${path}`;
-  document.getElementById('fileModalAlert').innerHTML = '';
-  currentFilePath = path;
-  openModal('fileModal');
-  const f = await getFile(path);
-  if (f) { document.getElementById('fileContent').value = f.content; currentFileSha = f.sha; }
-  else { document.getElementById('fileContent').value = 'فشل تحميل الملف'; }
-}
-
-async function saveFile() {
-  const content = document.getElementById('fileContent').value;
-  const msg = document.getElementById('fileCommitMsg').value || `تعديل ${currentFilePath}`;
-  document.getElementById('fileModalAlert').innerHTML = '<div class="alert alert-info">⏳ جاري الحفظ...</div>';
-  const res = await putFile(currentFilePath, content, currentFileSha, msg);
-  if (res.ok) {
-    document.getElementById('fileModalAlert').innerHTML = '<div class="alert alert-success">✅ تم الحفظ بنجاح</div>';
-    const f = await getFile(currentFilePath);
-    if (f) currentFileSha = f.sha;
-  } else {
-    const err = await res.json();
-    document.getElementById('fileModalAlert').innerHTML = `<div class="alert alert-error">❌ فشل: ${err.message}</div>`;
-  }
-}
-
-// ============================================================
+// ════════════════════════════════════════
 // NAVIGATION
-// ============================================================
+// ════════════════════════════════════════
 function navigateTo(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.getElementById('nav-' + page).classList.add('active');
-  const titles = { dashboard:'الرئيسية', news:'إدارة الأخبار', categories:'التصنيفات', bot:'البوت والأتمتة', triggers:'إدارة الملفات', site:'الإعدادات' };
-  document.getElementById('topBarTitle').textContent = titles[page] || '';
-  if (page === 'news') { renderNews(); }
-  if (page === 'categories') { renderCategories(); }
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.getElementById(`nav-${page}`).classList.add('active');
+  // Lazy load
+  if (page === 'files' && !document.getElementById('filesList').textContent.trim() || page === 'files') {
+    navigateDir(currentDir);
+  }
+  if (page === 'actions') {
+    renderRunsList(allRuns, 'runsList');
+    renderWorkflows();
+  }
 }
 
-// ============================================================
-// MODALS
-// ============================================================
+// ════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+
+// Close on backdrop tap
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('open');
+  }
 });
 
-function openConfirm(title, msg, callback) {
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmMessage').textContent = msg;
-  document.getElementById('confirmBtn').onclick = () => { closeModal('confirmModal'); callback(); };
-  openModal('confirmModal');
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
 }
 
-// ============================================================
-// UTILS
-// ============================================================
-function showGlobalAlert(msg, type) {
-  const el = document.getElementById('globalAlert');
-  el.style.display = 'block';
-  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
-  setTimeout(() => { el.style.display = 'none'; el.innerHTML = ''; }, 5000);
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d.replace(' ','T'));
+  if (isNaN(dt)) return d;
+  return dt.toLocaleDateString('ar-SA', {year:'numeric',month:'short',day:'numeric'});
 }
-
-function formatDate(str) {
-  if (!str) return '';
-  try {
-    const d = new Date(str);
-    if (isNaN(d)) return str;
-    return d.toLocaleDateString('ar-SA', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-  } catch { return str; }
+function openUrl(url) {
+  if (window.Android && window.Android.openUrl) { window.Android.openUrl(url); return; }
+  window.open(url, '_blank');
 }
-
-function formatBytes(b) {
-  if (!b) return '0 B';
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  return (b/1048576).toFixed(1) + ' MB';
-}
+function openWebsite() { openUrl(`https://${cfg.owner}.github.io/${cfg.repo !== cfg.owner+'.github.io' ? cfg.repo : ''}`); }
+function openReleases() { openUrl(`https://github.com/${cfg.owner}/${cfg.repo}/releases`); }
 </script>
 </body>
 </html>
